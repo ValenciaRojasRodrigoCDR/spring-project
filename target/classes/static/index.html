@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Mi perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="hdr">
+      <div class="logo">
+        <div class="logo-ico">⚡</div>
+        <div>
+          <div class="logo-txt">Mi perfil</div>
+          <div class="logo-sub">Panel de control</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="live-dot"></div>
+        <span class="live-lbl">Activo</span>
+        <button class="btn" id="logout-btn" style="font-size:11px;padding:4px 12px;">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <!-- BIENVENIDA -->
+    <div class="user-welcome glass">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-greeting">Bienvenido,</div>
+        <div class="user-name" id="user-name">—</div>
+      </div>
+    </div>
+
+    <!-- OPCIONES -->
+    <div class="club-grid">
+
+      <div class="glass club-card" id="btn-mi-club">
+        <div class="club-card-ico">🏆</div>
+        <div class="club-card-title">Tu club</div>
+        <div class="club-card-sub">Accede a tu club actual y consulta sus estadísticas</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+      <div class="glass club-card" id="btn-crear-club">
+        <div class="club-card-ico">✦</div>
+        <div class="club-card-title">Crear club</div>
+        <div class="club-card-sub">Crea un nuevo club y empieza a gestionar tu equipo</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+      <div class="glass club-card" id="btn-importar-club">
+        <div class="club-card-ico">📂</div>
+        <div class="club-card-title">Importar club</div>
+        <div class="club-card-sub">Importa los datos de tu club desde un fichero Excel</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const username = localStorage.getItem('username') || '—';
+    document.getElementById('user-name').textContent = username;
+    document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('username');
+      window.location.replace('/login.html');
+    });
+
+    document.getElementById('btn-mi-club').addEventListener('click', () => {
+      // TODO: navegar a la pantalla del club
+    });
+    document.getElementById('btn-crear-club').addEventListener('click', () => {
+      // TODO: navegar a crear club
+    });
+    document.getElementById('btn-importar-club').addEventListener('click', () => {
+      // TODO: navegar a importar club
+    });
+  </script>
+
+</body>
+</html>
