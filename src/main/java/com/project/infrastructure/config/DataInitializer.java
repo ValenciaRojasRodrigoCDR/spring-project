@@ -21,6 +21,9 @@ public class DataInitializer implements CommandLineRunner {
                     .username("admin")
                     .password(passwordEncoder.encode("admin"))
                     .role("ADMIN")
+                    .nombre("Admin")
+                    .apellidos("4M Drink Team")
+                    .email("admin@4mdrinkteam.com")
                     .build());
         }
     }

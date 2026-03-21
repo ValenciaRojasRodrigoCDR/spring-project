@@ -186,12 +186,37 @@ function updateKpi(index, { label, value, sub }) {
 /* ============================================================
    API HELPERS
    ============================================================ */
-async function apiFetch(path, options = {}) {
+async function apiUpload(path, file) {
+  const token = localStorage.getItem('jwt_token');
+  const form  = new FormData();
+  form.append('file', file);
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      body: form,
+    });
+    if (res.status === 401) { window.location.replace('/login.html'); return null; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('[Upload Error]', path, err);
+    return null;
+  }
+}
+
+
+async function apiFetch(path, options = {}) {
+  const token = localStorage.getItem('jwt_token');
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
       ...options,
     });
+    if (res.status === 401) { window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

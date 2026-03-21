@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Importar club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Importar club</div>
+      <div style="width:80px;"></div>
+    </header>
+
+    <!-- UPLOAD -->
+    <div class="glass full-panel">
+      <div class="ptitle">Fichero Excel</div>
+
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-zone-ico">📊</div>
+        <div class="drop-zone-lbl">Arrastra aquí tus ficheros Excel</div>
+        <div class="drop-zone-hint">.xlsx · .xls — puedes añadir varios</div>
+      </div>
+
+      <div class="file-list" id="file-list"></div>
+
+      <div class="upload-row">
+        <label class="btn" for="file-input">📂 Seleccionar fichero</label>
+        <input type="file" id="file-input" accept=".xlsx,.xls" multiple style="display:none" />
+        <button class="btn btn-primary" id="upload-btn">Importar</button>
+      </div>
+      <span id="upload-error" style="display:block;font-size:12px;color:var(--re);min-height:18px;margin-top:10px;"></span>
+    </div>
+
+    <!-- EXPORTAR (oculto hasta importar) -->
+    <div id="export-section" style="display:none;">
+      <div class="glass full-panel">
+        <div class="ptitle">Guardar club</div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <div class="profile-lbl">Nombre del club</div>
+            <input class="profile-val" id="export-nombre" type="text" placeholder="Nombre del club" style="background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit;width:100%;" />
+          </div>
+          <div class="profile-field">
+            <div class="profile-lbl">Temporada</div>
+            <input class="profile-val" id="export-temporada" type="text" placeholder="Ej: 2024/25" style="background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit;width:100%;" />
+          </div>
+          <div class="profile-field">
+            <div class="profile-lbl">Liga</div>
+            <input class="profile-val" id="export-liga" type="text" placeholder="Ej: Primera División" style="background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit;width:100%;" />
+          </div>
+          <div class="profile-field" style="border-bottom:none;">
+            <div class="profile-lbl">Descripción</div>
+            <input class="profile-val" id="export-descripcion" type="text" placeholder="Descripción opcional" style="background:transparent;border:none;outline:none;color:var(--txt);font-size:14px;font-family:inherit;width:100%;" />
+          </div>
+        </div>
+        <div class="upload-row" style="margin-top:16px;">
+          <button class="btn btn-primary" id="exportar-btn">Exportar a mi club</button>
+        </div>
+        <span id="export-error" style="display:block;font-size:12px;color:var(--re);min-height:18px;margin-top:10px;"></span>
+        <span id="export-ok" style="display:block;font-size:12px;color:var(--gr);min-height:18px;margin-top:4px;"></span>
+      </div>
+    </div>
+
+    <!-- PREVIEW (oculto hasta importar) -->
+    <div id="preview-section" style="display:none;">
+
+      <!-- KPIs -->
+      <div class="kpi-strip" id="kpi-strip">
+        <div class="kpi glass k1">
+          <div class="kpi-lbl">Jugadores</div>
+          <div class="kpi-val" id="kpi-jugadores">—</div>
+          <div class="kpi-sub">En el fichero</div>
+        </div>
+        <div class="kpi glass k2">
+          <div class="kpi-lbl">Partidos</div>
+          <div class="kpi-val" id="kpi-partidos">—</div>
+          <div class="kpi-sub">Jornadas</div>
+        </div>
+        <div class="kpi glass k3">
+          <div class="kpi-lbl">Goles equipo</div>
+          <div class="kpi-val" id="kpi-goles">—</div>
+          <div class="kpi-sub">Total temporada</div>
+        </div>
+        <div class="kpi glass k4">
+          <div class="kpi-lbl">Máx. goleador</div>
+          <div class="kpi-val" id="kpi-max">—</div>
+          <div class="kpi-sub" id="kpi-max-name">—</div>
+        </div>
+      </div>
+
+      <!-- TABLA JUGADORES -->
+      <div class="glass full-panel">
+        <div class="ptitle">Jugadores</div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nombre</th>
+              <th class="tr">Goles</th>
+              <th class="tr">Partidos</th>
+              <th class="tr">Goles/partido</th>
+            </tr>
+          </thead>
+          <tbody id="players-body"></tbody>
+        </table>
+      </div>
+
+      <!-- TABLA PARTIDOS -->
+      <div class="glass full-panel">
+        <div class="ptitle">Partidos</div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Jornada</th>
+              <th>Rival</th>
+              <th>Fecha</th>
+              <th>Resultado</th>
+              <th class="tr">Goles</th>
+            </tr>
+          </thead>
+          <tbody id="matches-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/index.html';
+    });
+
+    // ── Estado ───────────────────────────────────────────────────
+    const fileMap   = new Map(); // name → File
+    const dropZone  = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const errEl     = document.getElementById('upload-error');
+
+    // ── Drag & drop ──────────────────────────────────────────────
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      addFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+      addFiles(fileInput.files);
+      fileInput.value = '';
+    });
+
+    const ALLOWED_TYPES = new Set([
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
+    ]);
+
+    function isExcel(file) {
+      const name = file.name.toLowerCase();
+      const validExt  = name.endsWith('.xlsx') || name.endsWith('.xls');
+      const validType = ALLOWED_TYPES.has(file.type);
+      return validExt && validType;
+    }
+
+    function addFiles(fileList) {
+      const invalid    = [];
+      const duplicates = [];
+
+      Array.from(fileList).forEach(file => {
+        if (!isExcel(file)) {
+          invalid.push(file.name);
+        } else if (fileMap.has(file.name)) {
+          duplicates.push(file.name);
+        } else {
+          fileMap.set(file.name, file);
+        }
+      });
+
+      if (invalid.length && duplicates.length) {
+        errEl.textContent = `Formato no válido: ${invalid.join(', ')} · Ya añadido: ${duplicates.join(', ')}`;
+      } else if (invalid.length) {
+        errEl.textContent = `Solo se admiten ficheros Excel (.xlsx, .xls): ${invalid.join(', ')}`;
+      } else if (duplicates.length) {
+        errEl.textContent = `Ya añadido: ${duplicates.join(', ')}`;
+      } else {
+        errEl.textContent = '';
+      }
+
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('file-list');
+      list.innerHTML = '';
+      fileMap.forEach((file, name) => {
+        const row = document.createElement('div');
+        row.className = 'file-row glass';
+        row.innerHTML = `
+          <span class="file-row-ico">📄</span>
+          <div class="file-row-info">
+            <div class="file-row-name">${name}</div>
+            <div class="file-row-size">${(file.size / 1024).toFixed(1)} KB</div>
+          </div>
+          <button class="btn file-row-remove" data-name="${name}">✕</button>`;
+        list.appendChild(row);
+      });
+      list.querySelectorAll('.file-row-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          fileMap.delete(btn.dataset.name);
+          errEl.textContent = '';
+          renderFileList();
+        });
+      });
+    }
+
+    // ── Upload ───────────────────────────────────────────────────
+    document.getElementById('upload-btn').addEventListener('click', async () => {
+      if (!fileMap.size) { errEl.textContent = 'Añade al menos un fichero primero.'; return; }
+
+      const btn = document.getElementById('upload-btn');
+      btn.disabled = true;
+      btn.textContent = 'Importando…';
+      errEl.textContent = '';
+
+      let lastData = null;
+      for (const [, file] of fileMap) {
+        const data = await apiUpload('/excel/upload', file);
+        if (!data) { errEl.textContent = `Error al procesar: ${file.name}`; }
+        else lastData = data;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Importar';
+
+      if (lastData) renderPreview(lastData);
+    });
+
+    // ── Render ───────────────────────────────────────────────────
+    function renderPreview(data) {
+      const players = data.players ?? [];
+      lastPlayers = players;
+      const matches = data.matches ?? [];
+
+      const totalGoals = matches.reduce((s, m) => s + (m.teamTotalGoals ?? 0), 0);
+      const top = players.reduce((a, b) => (b.totalGoals > (a?.totalGoals ?? -1) ? b : a), null);
+
+      document.getElementById('kpi-jugadores').textContent = players.length;
+      document.getElementById('kpi-partidos').textContent  = matches.length;
+      document.getElementById('kpi-goles').textContent     = totalGoals;
+      document.getElementById('kpi-max').textContent       = top?.totalGoals ?? '—';
+      document.getElementById('kpi-max-name').textContent  = top?.name ?? '—';
+
+      // Jugadores — ordenados por goles desc
+      const sorted = [...players].sort((a, b) => b.totalGoals - a.totalGoals);
+      const tbody = document.getElementById('players-body');
+      tbody.innerHTML = '';
+      sorted.forEach((p, i) => {
+        const rank = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="rnk ${rank}">${i + 1}</span></td>
+          <td>${p.name}</td>
+          <td class="tr pts-cell">${p.totalGoals}</td>
+          <td class="tr">${p.partidosJugados}</td>
+          <td class="tr">${p.golPorPartido?.toFixed(2) ?? '—'}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Partidos
+      const mbody = document.getElementById('matches-body');
+      mbody.innerHTML = '';
+      matches.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="status-badge status-info">${m.jornada}</span></td>
+          <td>${m.rival ?? '—'}</td>
+          <td>${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '—'}</td>
+          <td>${m.result ?? '—'}</td>
+          <td class="tr pts-cell">${m.teamTotalGoals ?? '—'}</td>`;
+        mbody.appendChild(tr);
+      });
+
+      document.getElementById('preview-section').style.display = 'block';
+      document.getElementById('export-section').style.display = 'block';
+      document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ── Exportar ─────────────────────────────────────────────────
+    // TODO: mejorar los tiempos de exportación del archivo
+    let lastPlayers = [];
+
+    document.getElementById('exportar-btn').addEventListener('click', async () => {
+      const nombre = document.getElementById('export-nombre').value.trim();
+      const exportErr = document.getElementById('export-error');
+      const exportOk  = document.getElementById('export-ok');
+      exportErr.textContent = '';
+      exportOk.textContent  = '';
+
+      if (!nombre) { exportErr.textContent = 'El nombre del club es obligatorio.'; return; }
+      if (!lastPlayers.length) { exportErr.textContent = 'Importa un fichero primero.'; return; }
+
+      const btn = document.getElementById('exportar-btn');
+      btn.disabled = true;
+      btn.textContent = 'Guardando…';
+
+      const payload = {
+        nombre,
+        temporada:   document.getElementById('export-temporada').value.trim() || null,
+        liga:        document.getElementById('export-liga').value.trim()       || null,
+        descripcion: document.getElementById('export-descripcion').value.trim() || null,
+        jugadores: lastPlayers.map(p => ({
+          nombre:          p.name,
+          totalGoals:      p.totalGoals,
+          partidosJugados: p.partidosJugados,
+          golPorPartido:   p.golPorPartido ?? 0
+        }))
+      };
+
+      const result = await apiFetch('/equipos/importar', { method: 'POST', body: JSON.stringify(payload) });
+
+      btn.disabled = false;
+      btn.textContent = 'Exportar a mi club';
+
+      if (!result) {
+        exportErr.textContent = 'Error al guardar el club.';
+      } else {
+        exportOk.textContent = `Club "${result.nombre}" guardado. Redirigiendo…`;
+        setTimeout(() => window.location.replace('/index.html'), 1200);
+      }
+    });
+  </script>
+
+</body>
+</html>

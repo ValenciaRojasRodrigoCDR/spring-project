@@ -24,6 +24,10 @@ public class UserPersistenceAdapter implements UserRepository {
                 .username(e.getUsername())
                 .password(e.getPassword())
                 .role(e.getRole())
+                .nombre(e.getNombre())
+                .apellidos(e.getApellidos())
+                .email(e.getEmail())
+                .createdAt(e.getCreatedAt())
                 .build();
     }
 }

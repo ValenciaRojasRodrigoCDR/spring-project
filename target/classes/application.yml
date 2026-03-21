@@ -13,9 +13,13 @@ spring:
       enabled: true
       path: /h2-console
 
+  sql:
+    init:
+      mode: always
+
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:

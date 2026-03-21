@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Mi club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Mi club</div>
+      <div style="width:80px;"></div>
+    </header>
+
+    <div id="content"></div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/index.html';
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const equipos = await apiFetch('/equipos');
+      const content = document.getElementById('content');
+
+      if (!equipos || equipos.length === 0) {
+        content.innerHTML = `
+          <div class="glass full-panel" style="text-align:center;padding:48px 24px;">
+            <div style="font-size:40px;margin-bottom:16px;">🏆</div>
+            <div style="font-size:16px;font-weight:600;color:var(--txt);margin-bottom:8px;">No tienes equipos creados</div>
+            <div style="font-size:13px;color:var(--txt2);">Cuando crees un equipo aparecerá aquí.</div>
+          </div>`;
+        return;
+      }
+
+      content.innerHTML = equipos.map(e => `
+        <div class="glass full-panel" style="margin-bottom:var(--gap);">
+          <div class="ptitle">${e.nombre}</div>
+          <div class="profile-grid">
+            <div class="profile-field">
+              <div class="profile-lbl">Temporada</div>
+              <div class="profile-val">${e.temporada ?? '—'}</div>
+            </div>
+            <div class="profile-field">
+              <div class="profile-lbl">Liga</div>
+              <div class="profile-val">${e.liga ?? '—'}</div>
+            </div>
+            <div class="profile-field" style="border-bottom:none;">
+              <div class="profile-lbl">Descripción</div>
+              <div class="profile-val">${e.descripcion ?? '—'}</div>
+            </div>
+            <div class="profile-field" style="border-bottom:none;">
+              <div class="profile-lbl">Creado</div>
+              <div class="profile-val">${e.createdAt ? new Date(e.createdAt).toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="btn btn-primary stats-btn" data-id="${e.id}">📊 Estadísticas</button>
+          </div>
+        </div>`).join('');
+
+      content.querySelectorAll('.stats-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          window.location.href = `/estadisticas.html?equipoId=${btn.dataset.id}`;
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

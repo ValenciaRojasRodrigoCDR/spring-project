@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Mi perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="hdr-right">
+        <div class="live-dot"></div>
+        <span class="live-lbl">Activo</span>
+      </div>
+    </header>
+
+    <!-- AVATAR + NOMBRE -->
+    <div class="user-welcome glass" id="profile-hero">
+      <div class="user-avatar" id="profile-avatar">?</div>
+      <div>
+        <div class="user-name" id="profile-fullname">—</div>
+        <div class="user-greeting" id="profile-role">—</div>
+      </div>
+    </div>
+
+    <!-- DATOS -->
+    <div class="glass full-panel">
+      <div class="ptitle">Datos de la cuenta</div>
+      <div class="profile-grid">
+
+        <div class="profile-field">
+          <div class="profile-lbl">Usuario</div>
+          <div class="profile-val" id="pf-username">—</div>
+        </div>
+
+        <div class="profile-field">
+          <div class="profile-lbl">Email</div>
+          <div class="profile-val" id="pf-email">—</div>
+        </div>
+
+        <div class="profile-field">
+          <div class="profile-lbl">Nombre</div>
+          <div class="profile-val" id="pf-nombre">—</div>
+        </div>
+
+        <div class="profile-field">
+          <div class="profile-lbl">Apellidos</div>
+          <div class="profile-val" id="pf-apellidos">—</div>
+        </div>
+
+        <div class="profile-field">
+          <div class="profile-lbl">Rol</div>
+          <div class="profile-val" id="pf-role">—</div>
+        </div>
+
+        <div class="profile-field">
+          <div class="profile-lbl">Miembro desde</div>
+          <div class="profile-val" id="pf-created">—</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/index.html';
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await apiFetch('/users/me');
+      if (!user) return;
+
+      const fullname = [user.nombre, user.apellidos].filter(Boolean).join(' ') || user.username;
+      const initial  = fullname.charAt(0).toUpperCase();
+
+      document.getElementById('profile-avatar').textContent   = initial;
+      document.getElementById('profile-fullname').textContent = fullname;
+      document.getElementById('profile-role').textContent     = user.role ?? '—';
+      document.getElementById('pf-username').textContent      = user.username ?? '—';
+      document.getElementById('pf-email').textContent         = user.email ?? '—';
+      document.getElementById('pf-nombre').textContent        = user.nombre ?? '—';
+      document.getElementById('pf-apellidos').textContent     = user.apellidos ?? '—';
+      document.getElementById('pf-role').textContent          = user.role ?? '—';
+      document.getElementById('pf-created').textContent       = user.createdAt
+        ? new Date(user.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '—';
+    });
+  </script>
+
+</body>
+</html>
