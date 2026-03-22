@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Jugadores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <style>
+    .player-grid {
+      display: flex;
+      flex-direction: row;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .player-grid::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .player-grid::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .player-grid::-webkit-scrollbar-thumb {
+      background: var(--pu-brd);
+      border-radius: 2px;
+    }
+
+    .player-card {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 0 0 240px;
+    }
+
+    .player-card-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .player-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: linear-gradient(135deg, var(--pu), var(--bl));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--txt);
+      flex-shrink: 0;
+      box-shadow: 0 0 16px var(--pu-glow);
+    }
+
+    .player-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .player-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--txt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .player-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(167,139,250,0.15);
+      color: var(--pu);
+      border: 0.5px solid var(--pu-brd);
+    }
+
+    .player-dorsal {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: rgba(96,165,250,0.12);
+      color: var(--bl);
+      border: 0.5px solid rgba(96,165,250,0.3);
+    }
+
+    .player-edad {
+      font-size: 10px;
+      color: var(--txt3);
+    }
+
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+
+    .player-stat {
+      background: rgba(255,255,255,0.04);
+      border-radius: var(--radius-sm);
+      padding: 8px 6px;
+      text-align: center;
+    }
+
+    .player-stat-val {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--pu-light), var(--bl-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .player-stat-lbl {
+      font-size: 9px;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 3px;
+    }
+
+    /* Form panel */
+    .form-panel {
+      padding: 20px;
+      margin-bottom: var(--gap);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-field.full { grid-column: 1 / -1; }
+
+    .form-lbl {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .foto-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .foto-preview {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--glass);
+      border: 0.5px solid var(--glass-brd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .foto-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .player-card {
+      cursor: pointer;
+    }
+
+    .player-card:hover {
+      border-color: var(--pu-brd-soft);
+      transform: translateY(-2px);
+      transition: transform 0.15s;
+    }
+
+    .player-card.active {
+      border-color: var(--pu-brd);
+      background: rgba(167,139,250,0.08);
+    }
+
+    /* Detail panel */
+    .detail-panel {
+      padding: 24px;
+      margin-bottom: var(--gap);
+      display: none;
+      animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-inner {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .detail-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pu), var(--bl));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--txt);
+      box-shadow: 0 0 20px var(--pu-glow);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .detail-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .detail-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .detail-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .detail-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .detail-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .detail-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-stat-val {
+      font-size: 22px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--pu-light), var(--bl-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .detail-stat-lbl {
+      font-size: 9px;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    @media (max-width: 600px) {
+      .detail-inner { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt" id="header-title">Jugadores</div>
+      <button class="btn btn-primary" id="toggle-form-btn">+ Añadir</button>
+    </header>
+
+    <!-- FORM AÑADIR JUGADOR -->
+    <div class="glass form-panel" id="form-panel" style="display:none;">
+      <div class="ptitle">Nuevo jugador</div>
+      <form id="jugador-form">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-lbl">Nombre *</label>
+            <input class="input" type="text" name="nombre" placeholder="Nombre del jugador" required />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Posición</label>
+            <input class="input" type="text" name="posicion" placeholder="Ej: Delantero" />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Dorsal</label>
+            <input class="input" type="number" name="dorsal" placeholder="Nº" min="1" max="99" />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Edad</label>
+            <input class="input" type="number" name="edad" placeholder="Años" min="1" max="99" />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Foto</label>
+            <div class="foto-preview-wrap">
+              <div class="foto-preview" id="foto-preview">📷</div>
+              <input type="file" id="foto-input" name="foto" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
+              <button type="button" class="btn" id="foto-btn">Seleccionar foto</button>
+            </div>
+          </div>
+        </div>
+        <div id="form-error" style="font-size:12px;color:var(--re);min-height:18px;margin-bottom:10px;"></div>
+        <div class="form-actions">
+          <button type="button" class="btn" id="cancel-btn">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Guardar jugador</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- LISTA JUGADORES -->
+    <div id="content"></div>
+
+    <!-- PANEL DETALLE -->
+    <div class="glass detail-panel" id="detail-panel">
+      <div class="detail-inner">
+        <div class="detail-avatar" id="detail-avatar"></div>
+        <div class="detail-info">
+          <div class="detail-name" id="detail-name"></div>
+          <div class="detail-badges" id="detail-badges"></div>
+          <div class="detail-stats">
+            <div class="detail-stat">
+              <div class="detail-stat-val" id="detail-goles">—</div>
+              <div class="detail-stat-lbl">Goles</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-val" id="detail-partidos">—</div>
+              <div class="detail-stat-lbl">Partidos</div>
+            </div>
+            <div class="detail-stat">
+              <div class="detail-stat-val" id="detail-gpp">—</div>
+              <div class="detail-stat-lbl">G / Partido</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const params   = new URLSearchParams(window.location.search);
+    const equipoId = params.get('equipoId');
+    const from     = params.get('from') || 'club';
+
+    if (!equipoId) window.location.replace('/club.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      if (from === 'estadisticas') {
+        window.location.href = `/estadisticas.html?equipoId=${equipoId}`;
+      } else {
+        window.location.href = '/club.html';
+      }
+    });
+
+    // Toggle form
+    const formPanel = document.getElementById('form-panel');
+    document.getElementById('toggle-form-btn').addEventListener('click', () => {
+      formPanel.style.display = formPanel.style.display === 'none' ? 'block' : 'none';
+    });
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      formPanel.style.display = 'none';
+      document.getElementById('jugador-form').reset();
+      resetFotoPreview();
+    });
+
+    // Foto preview
+    const fotoInput = document.getElementById('foto-input');
+    document.getElementById('foto-btn').addEventListener('click', () => fotoInput.click());
+    fotoInput.addEventListener('change', () => {
+      const file = fotoInput.files[0];
+      if (!file) return;
+      const preview = document.getElementById('foto-preview');
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<img src="${url}" />`;
+    });
+
+    function resetFotoPreview() {
+      document.getElementById('foto-preview').innerHTML = '📷';
+    }
+
+    // Submit form
+    document.getElementById('jugador-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const form = e.target;
+      const data = new FormData();
+      data.append('nombre', form.nombre.value.trim());
+      data.append('equipoId', equipoId);
+      if (form.posicion.value.trim()) data.append('posicion', form.posicion.value.trim());
+      if (form.dorsal.value)          data.append('dorsal', form.dorsal.value);
+      if (form.edad.value)            data.append('edad', form.edad.value);
+      if (fotoInput.files[0])         data.append('foto', fotoInput.files[0]);
+
+      try {
+        const res = await fetch('/api/jugadores', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') },
+          body: data
+        });
+        if (!res.ok) throw new Error('Error al guardar el jugador');
+        formPanel.style.display = 'none';
+        form.reset();
+        resetFotoPreview();
+        await loadJugadores();
+      } catch (err) {
+        errEl.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Guardar jugador';
+      }
+    });
+
+    // Detail panel
+    const detailPanel = document.getElementById('detail-panel');
+    let activeCard = null;
+
+    function openDetail(card, j) {
+      if (activeCard === card) {
+        card.classList.remove('active');
+        detailPanel.style.display = 'none';
+        activeCard = null;
+        return;
+      }
+      if (activeCard) activeCard.classList.remove('active');
+      activeCard = card;
+      card.classList.add('active');
+
+      const initials = j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      document.getElementById('detail-avatar').innerHTML = j.fotoUrl
+        ? `<img src="/api/jugadores/${j.id}/foto" alt="${j.nombre}" />`
+        : initials;
+      document.getElementById('detail-name').textContent     = j.nombre;
+      document.getElementById('detail-goles').textContent    = j.totalGoals;
+      document.getElementById('detail-partidos').textContent = j.partidosJugados;
+      document.getElementById('detail-gpp').textContent      = j.golPorPartido?.toFixed(2) ?? '—';
+
+      const badges = [
+        j.posicion ? `<span class="player-badge">${j.posicion}</span>` : '',
+        j.dorsal   ? `<span class="player-dorsal">#${j.dorsal}</span>` : '',
+        j.edad     ? `<span class="player-edad">${j.edad} años</span>` : '',
+      ].filter(Boolean).join('');
+      document.getElementById('detail-badges').innerHTML = badges || '<span class="player-edad">Sin datos adicionales</span>';
+
+      detailPanel.style.display = 'block';
+    }
+
+    // Load jugadores
+    async function loadJugadores() {
+      const content = document.getElementById('content');
+      const jugadores = await apiFetch(`/equipos/${equipoId}/jugadores`);
+
+      if (!jugadores || jugadores.length === 0) {
+        content.innerHTML = `
+          <div class="glass full-panel" style="text-align:center;padding:48px 24px;">
+            <div style="font-size:40px;margin-bottom:16px;">👥</div>
+            <div style="font-size:16px;font-weight:600;color:var(--txt);margin-bottom:8px;">Sin jugadores aún</div>
+            <div style="font-size:13px;color:var(--txt2);">Pulsa "+ Añadir" para crear el primer jugador.</div>
+          </div>`;
+        return;
+      }
+
+      content.innerHTML = `<div class="player-grid">${jugadores.map(j => playerCard(j)).join('')}</div>`;
+
+      content.querySelectorAll('.player-card').forEach((card, i) => {
+        card.addEventListener('click', () => openDetail(card, jugadores[i]));
+      });
+    }
+
+    function playerCard(j) {
+      const initials = j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      const avatarHtml = j.fotoUrl
+        ? `<div class="player-avatar"><img src="/api/jugadores/${j.id}/foto" alt="${j.nombre}" /></div>`
+        : `<div class="player-avatar">${initials}</div>`;
+
+      const badges = [
+        j.posicion ? `<span class="player-badge">${j.posicion}</span>` : '',
+        j.dorsal   ? `<span class="player-dorsal">#${j.dorsal}</span>` : '',
+        j.edad     ? `<span class="player-edad">${j.edad} años</span>` : '',
+      ].filter(Boolean).join('');
+
+      return `
+        <div class="glass player-card">
+          <div class="player-card-top">
+            ${avatarHtml}
+            <div class="player-info">
+              <div class="player-name">${j.nombre}</div>
+              <div class="player-meta">${badges || '<span class="player-edad">Sin datos</span>'}</div>
+            </div>
+          </div>
+          <div class="player-stats">
+            <div class="player-stat">
+              <div class="player-stat-val">${j.totalGoals}</div>
+              <div class="player-stat-lbl">Goles</div>
+            </div>
+            <div class="player-stat">
+              <div class="player-stat-val">${j.partidosJugados}</div>
+              <div class="player-stat-lbl">Partidos</div>
+            </div>
+            <div class="player-stat">
+              <div class="player-stat-val">${j.golPorPartido?.toFixed(2) ?? '—'}</div>
+              <div class="player-stat-lbl">G/P</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Título con nombre del equipo
+      const equipos = await apiFetch('/equipos');
+      if (equipos) {
+        const equipo = equipos.find(e => String(e.id) === equipoId);
+        if (equipo) document.getElementById('header-title').textContent = equipo.nombre;
+      }
+      await loadJugadores();
+    });
+  </script>
+
+</body>
+</html>

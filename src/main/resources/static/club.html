@@ -72,14 +72,21 @@
               <div class="profile-val">${e.createdAt ? new Date(e.createdAt).toLocaleDateString('es-ES',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div>
             </div>
           </div>
-          <div style="margin-top:16px;">
+          <div style="margin-top:16px;display:flex;gap:8px;">
             <button class="btn btn-primary stats-btn" data-id="${e.id}">📊 Estadísticas</button>
+            <button class="btn jugadores-btn" data-id="${e.id}">👥 Jugadores</button>
           </div>
         </div>`).join('');
 
       content.querySelectorAll('.stats-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           window.location.href = `/estadisticas.html?equipoId=${btn.dataset.id}`;
+        });
+      });
+
+      content.querySelectorAll('.jugadores-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          window.location.href = `/jugadores.html?equipoId=${btn.dataset.id}&from=club`;
         });
       });
     });

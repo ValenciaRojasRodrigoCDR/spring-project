@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -23,13 +24,22 @@ public class JugadorPersistenceAdapter implements JugadorRepository {
         return jpaRepository.findByEquipoId(equipoId).stream().map(this::toDomain).toList();
     }
 
+    @Override
+    public Optional<Jugador> findById(Long id) {
+        return jpaRepository.findById(id).map(this::toDomain);
+    }
+
     private Jugador toDomain(JugadorEntity e) {
         return Jugador.builder()
                 .id(e.getId())
                 .nombre(e.getNombre())
+                .posicion(e.getPosicion())
+                .dorsal(e.getDorsal())
+                .edad(e.getEdad())
                 .totalGoals(e.getTotalGoals())
                 .partidosJugados(e.getPartidosJugados())
                 .golPorPartido(e.getGolPorPartido())
+                .fotoUrl(e.getFotoUrl())
                 .equipoId(e.getEquipoId())
                 .build();
     }
@@ -38,9 +48,13 @@ public class JugadorPersistenceAdapter implements JugadorRepository {
         return JugadorEntity.builder()
                 .id(j.getId())
                 .nombre(j.getNombre())
+                .posicion(j.getPosicion())
+                .dorsal(j.getDorsal())
+                .edad(j.getEdad())
                 .totalGoals(j.getTotalGoals())
                 .partidosJugados(j.getPartidosJugados())
                 .golPorPartido(j.getGolPorPartido())
+                .fotoUrl(j.getFotoUrl())
                 .equipoId(j.getEquipoId())
                 .build();
     }

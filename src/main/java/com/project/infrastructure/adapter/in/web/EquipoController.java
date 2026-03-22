@@ -46,8 +46,8 @@ public class EquipoController {
     public ResponseEntity<List<JugadorResponse>> jugadores(@PathVariable Long id) {
         List<JugadorResponse> jugadores = getJugadoresQuery.getByEquipoId(id)
                 .stream().map(j -> new JugadorResponse(
-                        j.getId(), j.getNombre(), j.getTotalGoals(),
-                        j.getPartidosJugados(), j.getGolPorPartido()))
+                        j.getId(), j.getNombre(), j.getPosicion(), j.getDorsal(), j.getEdad(),
+                        j.getTotalGoals(), j.getPartidosJugados(), j.getGolPorPartido(), j.getFotoUrl()))
                 .toList();
         return ResponseEntity.ok(jugadores);
     }

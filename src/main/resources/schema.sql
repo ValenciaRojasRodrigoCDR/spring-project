@@ -23,9 +23,13 @@ CREATE TABLE IF NOT EXISTS equipos (
 CREATE TABLE IF NOT EXISTS jugadores (
     id                BIGINT         AUTO_INCREMENT PRIMARY KEY,
     nombre            VARCHAR(150)   NOT NULL,
+    posicion          VARCHAR(50),
+    dorsal            INT,
+    edad              INT,
     total_goals       INT            DEFAULT 0,
     partidos_jugados  INT            DEFAULT 0,
     gol_por_partido   DOUBLE         DEFAULT 0,
+    foto_url          VARCHAR(500),
     equipo_id         BIGINT         NOT NULL,
     CONSTRAINT fk_jugador_equipo FOREIGN KEY (equipo_id) REFERENCES equipos(id)
 );

@@ -18,6 +18,12 @@ public class JugadorEntity {
     @Column(nullable = false)
     private String nombre;
 
+    private String posicion;
+
+    private Integer dorsal;
+
+    private Integer edad;
+
     @Column(name = "total_goals")
     private int totalGoals;
 
@@ -26,6 +32,9 @@ public class JugadorEntity {
 
     @Column(name = "gol_por_partido")
     private double golPorPartido;
+
+    @Column(name = "foto_url")
+    private String fotoUrl;
 
     @Column(name = "equipo_id", nullable = false)
     private Long equipoId;

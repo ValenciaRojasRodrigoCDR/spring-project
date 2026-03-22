@@ -22,7 +22,7 @@
     <header class="hdr" style="justify-content:space-between;">
       <button class="btn" id="back-btn">← Volver</button>
       <div class="logo-txt" id="header-title">Estadísticas</div>
-      <div style="width:80px;"></div>
+      <button class="btn" id="jugadores-btn">👥 Jugadores</button>
     </header>
 
     <!-- KPIs -->
@@ -98,6 +98,10 @@
 
     document.getElementById('back-btn').addEventListener('click', () => {
       window.location.href = '/club.html';
+    });
+
+    document.getElementById('jugadores-btn').addEventListener('click', () => {
+      window.location.href = `/jugadores.html?equipoId=${equipoId}&from=estadisticas`;
     });
 
     document.addEventListener('DOMContentLoaded', async () => {

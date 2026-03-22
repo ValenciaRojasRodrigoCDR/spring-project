@@ -8,8 +8,12 @@ import lombok.Value;
 public class Jugador {
     Long id;
     String nombre;
+    String posicion;
+    Integer dorsal;
+    Integer edad;
     int totalGoals;
     int partidosJugados;
     double golPorPartido;
+    String fotoUrl;
     Long equipoId;
 }

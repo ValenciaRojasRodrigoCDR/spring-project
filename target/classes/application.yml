@@ -33,6 +33,7 @@ app:
   jwt:
     secret: cHJvamVjdC1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW5zLWNoYW5nZS1pbi1wcm9kdWN0aW9u
     expiration-ms: 86400000   # 24 h
+  upload-dir: uploads/jugadores
 
 ---
 # Perfil local — activa con: -Dspring.profiles.active=local
