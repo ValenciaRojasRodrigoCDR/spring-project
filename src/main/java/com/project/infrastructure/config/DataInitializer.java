@@ -2,6 +2,7 @@ package com.project.infrastructure.config;
 
 import com.project.infrastructure.adapter.out.persistence.UserEntity;
 import com.project.infrastructure.adapter.out.persistence.UserJpaRepository;
+import com.project.infrastructure.util.Constants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,14 +17,14 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userJpaRepository.findByUsername("admin").isEmpty()) {
+        if (userJpaRepository.findByUsername(Constants.ADMIN_USERNAME).isEmpty()) {
             userJpaRepository.save(UserEntity.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin"))
-                    .role("ADMIN")
-                    .nombre("Admin")
-                    .apellidos("4M Drink Team")
-                    .email("admin@4mdrinkteam.com")
+                    .username(Constants.ADMIN_USERNAME)
+                    .password(passwordEncoder.encode(Constants.ADMIN_PASSWORD))
+                    .role(Constants.ADMIN_ROLE)
+                    .nombre(Constants.ADMIN_NOMBRE)
+                    .apellidos(Constants.ADMIN_APELLIDOS)
+                    .email(Constants.ADMIN_EMAIL)
                     .build());
         }
     }
