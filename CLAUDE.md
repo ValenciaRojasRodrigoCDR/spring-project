@@ -25,7 +25,7 @@ mvn clean package
 java -jar target/my-app-0.0.1-SNAPSHOT.jar
 ```
 
-**Prerequisites:** Java 21+, MySQL running on `localhost:3306` with database `mydb`. Credentials default to `root`/`root` (override via `DB_USERNAME` / `DB_PASSWORD` env vars).
+**Prerequisites:** Java 20+. The default profile uses an **H2 in-memory database** — no external DB needed to run. MySQL connector is included as a runtime dependency for production use.
 
 ## Architecture
 
@@ -56,14 +56,27 @@ com.project/
 
 ## Key Configuration
 
-`src/main/resources/application.yml` — main config. Two profiles:
-- **default:** `ddl-auto: validate`, SQL logging off
-- **local:** `ddl-auto: update`, SQL logging on
+`src/main/resources/application.yml` — main config. App runs on **port 3000**.
+
+- **default:** H2 in-memory DB (`jdbc:h2:mem:mydb`), schema initialized from `src/main/resources/schema.sql`, SQL logging off. H2 console available at `/h2-console`.
+- **local:** Same as default but with `show-sql: true`.
+
+JWT secret and expiration are configured under `app.jwt`. Uploaded player photos go to `uploads/jugadores/` (configurable via `app.upload-dir`).
+
+`DataInitializer` seeds a default `admin`/`admin` user on first startup.
+
+## Security
+
+Stateless JWT auth via `JwtAuthFilter`. Public routes: `/api/auth/**`, `/api/jugadores/*/foto`, `/h2-console/**`, and all static HTML/CSS/JS assets. Everything else requires a valid Bearer token.
+
+## Excel feature
+
+`ExcelParserAdapter` parses `.xlsx` files using Apache POI. The expected format is a fixed-layout sheet: players in rows 3–18 (0-based 2–17), jornada columns in two blocks (B–L for J1–J11, N–X for J12–J22, column M is a separator). An example file is at `src/main/resources/examples/4M BIG DATA.xlsx`.
 
 ## Frontend
 
 Static assets served by Spring Boot from `src/main/resources/static/`:
-- **`index.html`** — dashboard template
+- Pages: `login.html`, `index.html` (dashboard), `club.html`, `jugadores.html`, `estadisticas.html`, `import-club.html`, `profile.html`
 - **`css/main.css`** — glassmorphism design system (CSS variables: `--pu`, `--bl`, `--pk`, `--gr`, `--am`, `--re`)
 - **`js/main.js`** — utilities (`apiFetch`, `renderTable`, `createBarChart`, `createLineChart`, `updateKpi`)
 
@@ -75,4 +88,4 @@ Do not add Javadoc or inline comments to model classes, DTOs, enums, or records.
 
 ## Testing
 
-JUnit 5 + Mockito via `spring-boot-starter-test`. H2 in-memory DB is available for test scope — create `src/test/resources/application-test.yml` to override datasource when needed. Test directory structure mirrors `src/main/java/com/project/`.
+JUnit 5 + Mockito via `spring-boot-starter-test`. H2 in-memory DB is the default datasource — create `src/test/resources/application-test.yml` to override if needed. Test directory structure mirrors `src/main/java/com/project/`.
