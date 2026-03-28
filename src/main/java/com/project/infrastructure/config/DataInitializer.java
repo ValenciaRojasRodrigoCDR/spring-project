@@ -20,7 +20,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userJpaRepository.findByUsername(Constants.ADMIN_USERNAME).isEmpty()) {
             userJpaRepository.save(UserEntity.builder()
                     .username(Constants.ADMIN_USERNAME)
-                    .password(passwordEncoder.encode(Constants.ADMIN_PASSWORD))
+                    .password(passwordEncoder.encode(Constants.ADMIN_P))
                     .role(Constants.ADMIN_ROLE)
                     .nombre(Constants.ADMIN_NOMBRE)
                     .apellidos(Constants.ADMIN_APELLIDOS)
