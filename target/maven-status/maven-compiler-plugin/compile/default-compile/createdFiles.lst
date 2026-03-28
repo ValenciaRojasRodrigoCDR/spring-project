@@ -29,9 +29,12 @@ com\project\application\port\in\CreateJugadorUseCase.class
 com\project\domain\model\ExcelData$ExcelDataBuilder.class
 com\project\application\port\out\ExcelParserPort.class
 com\project\application\service\AuthService.class
+com\project\infrastructure\adapter\out\persistence\JugadorJpaRepository.class
+com\project\infrastructure\adapter\in\web\JugadorController.class
 com\project\application\port\in\ImportarClubUseCase$JugadorData.class
 com\project\infrastructure\adapter\out\persistence\EquipoPersistenceAdapter.class
 com\project\infrastructure\adapter\in\web\UserController.class
+com\project\infrastructure\config\SecurityConfig.class
 com\project\domain\model\PlayerStats$PlayerStatsBuilder.class
 com\project\application\port\in\LoginUseCase.class
 com\project\infrastructure\adapter\out\persistence\EquipoJpaRepository.class
@@ -49,12 +52,15 @@ com\project\domain\model\User.class
 com\project\domain\model\PlayerStats.class
 com\project\application\port\in\LoginUseCase$LoginCommand.class
 com\project\infrastructure\adapter\out\excel\ExcelParserAdapter$1.class
+com\project\infrastructure\adapter\out\persistence\JugadorPersistenceAdapter.class
 com\project\infrastructure\adapter\in\web\dto\CreateEquipoRequest.class
 com\project\application\port\in\GetJugadoresQuery.class
 com\project\application\port\out\UserRepository.class
 com\project\infrastructure\adapter\in\web\dto\UserResponse.class
 com\project\application\port\in\ImportarClubUseCase$ImportarClubResult.class
 com\project\application\service\JugadorQueryService.class
+com\project\infrastructure\adapter\out\persistence\JugadorEntity.class
+com\project\infrastructure\adapter\out\persistence\JugadorEntity$JugadorEntityBuilder.class
 com\project\application\port\in\CreateEquipoUseCase$CreateEquipoCommand.class
 com\project\infrastructure\adapter\out\persistence\UserEntity$UserEntityBuilder.class
 com\project\domain\model\JornadaEntry.class
@@ -65,6 +71,7 @@ com\project\infrastructure\config\JwtAuthFilter.class
 com\project\infrastructure\adapter\in\web\dto\JugadorResponse.class
 com\project\domain\model\Jugador.class
 com\project\application\port\in\ExcelUploadUseCase.class
+com\project\infrastructure\adapter\out\storage\FileStorageAdapter.class
 com\project\MyAppApplication.class
 com\project\domain\model\Jugador$JugadorBuilder.class
 com\project\infrastructure\adapter\in\web\EquipoController.class
