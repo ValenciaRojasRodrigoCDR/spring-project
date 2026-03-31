@@ -4,9 +4,11 @@ import com.project.application.port.in.CreateEquipoUseCase;
 import com.project.application.port.in.GetEquiposQuery;
 import com.project.application.port.in.GetJugadoresQuery;
 import com.project.application.port.in.GetUserQuery;
+import com.project.application.port.in.UpdateEquipoUseCase;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
 import com.project.infrastructure.adapter.in.web.dto.EquipoResponse;
 import com.project.infrastructure.adapter.in.web.dto.JugadorResponse;
+import com.project.infrastructure.adapter.in.web.dto.UpdateEquipoRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,7 @@ import java.util.List;
 public class EquipoController {
 
     private final CreateEquipoUseCase createEquipoUseCase;
+    private final UpdateEquipoUseCase updateEquipoUseCase;
     private final GetEquiposQuery     getEquiposQuery;
     private final GetUserQuery        getUserQuery;
     private final GetJugadoresQuery   getJugadoresQuery;
@@ -41,6 +44,16 @@ public class EquipoController {
         var equipo = createEquipoUseCase.create(new CreateEquipoUseCase.CreateEquipoCommand(
                 request.nombre(), request.temporada(), request.liga(), request.descripcion(), userId));
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(equipo));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EquipoResponse> update(@PathVariable Long id,
+                                                 @Valid @RequestBody UpdateEquipoRequest request,
+                                                 Authentication authentication) {
+        Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
+        var equipo = updateEquipoUseCase.update(new UpdateEquipoUseCase.UpdateEquipoCommand(
+                id, request.nombre(), request.temporada(), request.liga(), request.descripcion(), userId));
+        return ResponseEntity.ok(toResponse(equipo));
     }
 
     @GetMapping("/{id}/jugadores")

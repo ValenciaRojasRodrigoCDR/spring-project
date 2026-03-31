@@ -75,6 +75,7 @@
           <div style="margin-top:16px;display:flex;gap:8px;">
             <button class="btn btn-primary stats-btn" data-id="${e.id}">📊 Estadísticas</button>
             <button class="btn jugadores-btn" data-id="${e.id}">👥 Jugadores</button>
+            <button class="btn editar-btn" data-id="${e.id}" data-nombre="${e.nombre}" data-temporada="${e.temporada ?? ''}" data-liga="${e.liga ?? ''}" data-descripcion="${e.descripcion ?? ''}">✏️ Editar</button>
           </div>
         </div>`).join('');
 
@@ -89,8 +90,79 @@
           window.location.href = `/jugadores.html?equipoId=${btn.dataset.id}&from=club`;
         });
       });
+
+      content.querySelectorAll('.editar-btn').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.dataset));
+      });
+    });
+
+    // ── Modal ──────────────────────────────────────────────────────────────
+    function openModal({ id, nombre, temporada, liga, descripcion }) {
+      document.getElementById('modal-id').value          = id;
+      document.getElementById('modal-nombre').value      = nombre;
+      document.getElementById('modal-temporada').value   = temporada;
+      document.getElementById('modal-liga').value        = liga;
+      document.getElementById('modal-descripcion').value = descripcion;
+      document.getElementById('modal-error').textContent = '';
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    document.getElementById('edit-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.getElementById('edit-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id     = document.getElementById('modal-id').value;
+      const body   = {
+        nombre:      document.getElementById('modal-nombre').value.trim(),
+        temporada:   document.getElementById('modal-temporada').value.trim() || null,
+        liga:        document.getElementById('modal-liga').value.trim() || null,
+        descripcion: document.getElementById('modal-descripcion').value.trim() || null,
+      };
+      const errorEl = document.getElementById('modal-error');
+      const result = await apiFetch(`/equipos/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+      if (result === null) {
+        errorEl.textContent = 'Error al guardar los cambios';
+        return;
+      }
+      closeModal();
+      window.location.reload();
     });
   </script>
+
+  <!-- Modal editar equipo -->
+  <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;">
+    <div class="glass" style="width:min(440px,92vw);padding:32px;position:relative;">
+      <button onclick="closeModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--txt2);font-size:20px;cursor:pointer;">✕</button>
+      <div class="ptitle" style="margin-bottom:20px;">Editar equipo</div>
+      <form id="edit-form" style="display:flex;flex-direction:column;gap:14px;">
+        <input type="hidden" id="modal-id" />
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Nombre *</div>
+          <input id="modal-nombre" class="input" type="text" required placeholder="Nombre del equipo" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Temporada</div>
+          <input id="modal-temporada" class="input" type="text" placeholder="Ej: 2024/25" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Liga</div>
+          <input id="modal-liga" class="input" type="text" placeholder="Ej: Primera División" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Descripción</div>
+          <textarea id="modal-descripcion" class="input" rows="3" placeholder="Descripción opcional" style="resize:vertical;"></textarea>
+        </div>
+        <div id="modal-error" style="color:var(--re);font-size:13px;min-height:18px;"></div>
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+      </form>
+    </div>
+  </div>
 
 </body>
 </html>

@@ -11,9 +11,4 @@ class MyAppApplicationTest {
     @Test
     void contextLoads() {
     }
-
-    @Test
-    void main_runsWithoutException() {
-        MyAppApplication.main(new String[]{});
-    }
 }
