@@ -7,6 +7,7 @@ import com.project.application.port.in.GetUserQuery;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
 import com.project.infrastructure.adapter.in.web.dto.EquipoResponse;
 import com.project.infrastructure.adapter.in.web.dto.JugadorResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class EquipoController {
     }
 
     @PostMapping
-    public ResponseEntity<EquipoResponse> create(@RequestBody CreateEquipoRequest request,
+    public ResponseEntity<EquipoResponse> create(@Valid @RequestBody CreateEquipoRequest request,
                                                  Authentication authentication) {
         Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
         var equipo = createEquipoUseCase.create(new CreateEquipoUseCase.CreateEquipoCommand(

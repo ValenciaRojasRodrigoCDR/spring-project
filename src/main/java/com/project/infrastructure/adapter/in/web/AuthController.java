@@ -4,6 +4,7 @@ import com.project.application.port.in.LoginUseCase;
 import com.project.domain.exception.InvalidCredentialsException;
 import com.project.infrastructure.adapter.in.web.dto.LoginRequest;
 import com.project.infrastructure.adapter.in.web.dto.LoginResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class AuthController {
     private final LoginUseCase loginUseCase;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         try {
             String token = loginUseCase.login(
                     new LoginUseCase.LoginCommand(request.username(), request.password())

@@ -4,6 +4,7 @@ import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.ImportarClubUseCase;
 import com.project.infrastructure.adapter.in.web.dto.ImportarClubRequest;
 import com.project.infrastructure.adapter.in.web.dto.ImportarClubResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class ImportarClubController {
     private final GetUserQuery getUserQuery;
 
     @PostMapping("/importar")
-    public ResponseEntity<ImportarClubResponse> importar(@RequestBody ImportarClubRequest request,
+    public ResponseEntity<ImportarClubResponse> importar(@Valid @RequestBody ImportarClubRequest request,
                                                           Authentication authentication) {
         Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
 

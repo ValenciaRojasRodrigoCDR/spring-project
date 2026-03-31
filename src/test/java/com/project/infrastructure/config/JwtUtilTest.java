@@ -22,14 +22,14 @@ class JwtUtilTest {
 
     @Test
     void generateToken_returnsNonNullToken() {
-        String token = jwtUtil.generateToken("admin");
+        String token = jwtUtil.generateToken("admin", "ADMIN");
 
         assertThat(token).isNotBlank();
     }
 
     @Test
     void extractUsername_returnsCorrectUsername() {
-        String token = jwtUtil.generateToken("admin");
+        String token = jwtUtil.generateToken("admin", "ADMIN");
 
         String username = jwtUtil.extractUsername(token);
 
@@ -38,7 +38,7 @@ class JwtUtilTest {
 
     @Test
     void isValid_validToken_returnsTrue() {
-        String token = jwtUtil.generateToken("admin");
+        String token = jwtUtil.generateToken("admin", "ADMIN");
 
         assertThat(jwtUtil.isValid(token)).isTrue();
     }
@@ -50,7 +50,7 @@ class JwtUtilTest {
 
     @Test
     void isValid_tamperedToken_returnsFalse() {
-        String token = jwtUtil.generateToken("admin");
+        String token = jwtUtil.generateToken("admin", "ADMIN");
         String tampered = token.substring(0, token.length() - 4) + "XXXX";
 
         assertThat(jwtUtil.isValid(tampered)).isFalse();
@@ -58,9 +58,18 @@ class JwtUtilTest {
 
     @Test
     void generateToken_differentUsers_differentTokens() {
-        String token1 = jwtUtil.generateToken("user1");
-        String token2 = jwtUtil.generateToken("user2");
+        String token1 = jwtUtil.generateToken("user1", "USER");
+        String token2 = jwtUtil.generateToken("user2", "USER");
 
         assertThat(token1).isNotEqualTo(token2);
+    }
+
+    @Test
+    void extractRole_returnsCorrectRole() {
+        String token = jwtUtil.generateToken("admin", "ADMIN");
+
+        String role = jwtUtil.extractRole(token);
+
+        assertThat(role).isEqualTo("ADMIN");
     }
 }

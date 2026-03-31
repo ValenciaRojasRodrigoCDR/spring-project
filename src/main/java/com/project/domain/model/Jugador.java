@@ -15,5 +15,6 @@ public class Jugador {
     int partidosJugados;
     double golPorPartido;
     String fotoUrl;
+    boolean fotoConvertida;
     Long equipoId;
 }

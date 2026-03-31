@@ -36,6 +36,9 @@ public class JugadorEntity {
     @Column(name = "foto_url")
     private String fotoUrl;
 
+    @Column(name = "foto_convertida")
+    private boolean fotoConvertida;
+
     @Column(name = "equipo_id", nullable = false)
     private Long equipoId;
 }

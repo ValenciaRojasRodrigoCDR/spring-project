@@ -2,6 +2,7 @@ package com.project.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,7 +32,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/jugadores/*/foto").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/", "/login.html", "/index.html", "/profile.html", "/import-club.html", "/club.html", "/estadisticas.html", "/jugadores.html", "/css/**", "/js/**", "/assets/**").permitAll()
+                        .requestMatchers("/", "/login.html", "/index.html", "/profile.html", "/import-club.html", "/club.html", "/estadisticas.html", "/jugadores.html", "/editar-jugador.html", "/css/**", "/js/**", "/assets/**").permitAll()
+                        // Mutaciones — solo ADMIN
+                        .requestMatchers(HttpMethod.POST, "/api/jugadores").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/jugadores/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/equipos").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/equipos/importar").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/excel/**").hasRole("ADMIN")
+                        // Lectura — cualquier autenticado
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
