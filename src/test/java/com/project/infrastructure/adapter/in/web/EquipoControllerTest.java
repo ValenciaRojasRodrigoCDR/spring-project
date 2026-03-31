@@ -5,10 +5,14 @@ import com.project.application.port.in.CreateEquipoUseCase;
 import com.project.application.port.in.GetEquiposQuery;
 import com.project.application.port.in.GetJugadoresQuery;
 import com.project.application.port.in.GetUserQuery;
+import com.project.application.port.in.UpdateEquipoUseCase;
+import com.project.domain.exception.EquipoNotFoundException;
+import com.project.domain.exception.UnauthorizedEquipoAccessException;
 import com.project.domain.model.Equipo;
 import com.project.domain.model.Jugador;
 import com.project.domain.model.User;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
+import com.project.infrastructure.adapter.in.web.dto.UpdateEquipoRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EquipoControllerTest {
 
     @Mock CreateEquipoUseCase createEquipoUseCase;
+    @Mock UpdateEquipoUseCase updateEquipoUseCase;
     @Mock GetEquiposQuery getEquiposQuery;
     @Mock GetUserQuery getUserQuery;
     @Mock GetJugadoresQuery getJugadoresQuery;
@@ -42,7 +47,9 @@ class EquipoControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(equipoController).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(equipoController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     private User buildUser() {
@@ -92,6 +99,56 @@ class EquipoControllerTest {
                         .content(objectMapper.writeValueAsString(new CreateEquipoRequest("FC Test", "2024", "Liga A", "Desc"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nombre").value("FC Test"));
+    }
+
+    @Test
+    void update_validRequest_returnsOk() throws Exception {
+        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
+        Equipo updated = Equipo.builder().id(1L).nombre("FC Nuevo").temporada("2025")
+                .liga("Liga B").descripcion("Desc").userId(1L).createdAt(LocalDateTime.of(2024, 1, 1, 0, 0)).build();
+        when(updateEquipoUseCase.update(any())).thenReturn(updated);
+
+        mockMvc.perform(put("/api/equipos/1")
+                        .principal(mockAuth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UpdateEquipoRequest("FC Nuevo", "2025", "Liga B", "Desc"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("FC Nuevo"));
+    }
+
+    @Test
+    void update_equipoNotFound_returns404() throws Exception {
+        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
+        when(updateEquipoUseCase.update(any())).thenThrow(new EquipoNotFoundException(1L));
+
+        mockMvc.perform(put("/api/equipos/1")
+                        .principal(mockAuth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UpdateEquipoRequest("FC Nuevo", "2025", "Liga B", "Desc"))))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void update_notOwner_returns403() throws Exception {
+        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
+        when(updateEquipoUseCase.update(any())).thenThrow(new UnauthorizedEquipoAccessException());
+
+        mockMvc.perform(put("/api/equipos/1")
+                        .principal(mockAuth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UpdateEquipoRequest("FC Nuevo", "2025", "Liga B", "Desc"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void update_missingNombre_returns400() throws Exception {
+        mockMvc.perform(put("/api/equipos/1")
+                        .principal(mockAuth())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new UpdateEquipoRequest("", "2025", null, null))))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

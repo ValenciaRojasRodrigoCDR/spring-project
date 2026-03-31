@@ -13,7 +13,11 @@
       "Bash(where gh:*)",
       "Read(//c/Program Files/**)",
       "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2023.1.3/plugins/maven/lib/maven3/bin/mvn\" clean verify)",
-      "Read(//c/Users/rodri/OneDrive/Desktop/claude/spring-project/**)"
+      "Read(//c/Users/rodri/OneDrive/Desktop/claude/spring-project/**)",
+      "Bash(find /c/Users/rodri/OneDrive/Desktop/claude/spring-project/src/main/java/com/project -type f -name *quipo*)",
+      "Bash(grep -v \"^\\\\[ERROR\\\\] To see\\\\|^\\\\[ERROR\\\\] Re-run\\\\|^\\\\[ERROR\\\\] For more\\\\|^\\\\[ERROR\\\\] ->\\\\|^\\\\[ERROR\\\\]$\")",
+      "Bash(grep -v \"^\\\\[ERROR\\\\] To see\\\\|^\\\\[ERROR\\\\] Re-run\\\\|^\\\\[ERROR\\\\] For more\\\\|^\\\\[ERROR\\\\] ->\\\\|^\\\\[ERROR\\\\]$\\\\|^\\\\[ERROR\\\\] See\")",
+      "Bash(\"/c/Program Files/JetBrains/IntelliJ IDEA 2023.1.3/plugins/maven/lib/maven3/bin/mvn\" clean verify -q)"
     ]
   }
 }

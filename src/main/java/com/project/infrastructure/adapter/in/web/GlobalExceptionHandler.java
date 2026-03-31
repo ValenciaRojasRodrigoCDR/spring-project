@@ -1,5 +1,7 @@
 package com.project.infrastructure.adapter.in.web;
 
+import com.project.domain.exception.EquipoNotFoundException;
+import com.project.domain.exception.UnauthorizedEquipoAccessException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,5 +38,15 @@ public class GlobalExceptionHandler {
                         (a, b) -> a
                 ));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("errors", errors));
+    }
+
+    @ExceptionHandler(EquipoNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEquipoNotFound(EquipoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedEquipoAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedEquipoAccess(UnauthorizedEquipoAccessException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 }

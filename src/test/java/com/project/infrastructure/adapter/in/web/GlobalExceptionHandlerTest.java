@@ -1,5 +1,7 @@
 package com.project.infrastructure.adapter.in.web;
 
+import com.project.domain.exception.EquipoNotFoundException;
+import com.project.domain.exception.UnauthorizedEquipoAccessException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -88,5 +90,63 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
         assertThat(errors).containsEntry("nombre", "must not be blank");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void handleValidation_duplicateField_keepsFirst() {
+        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
+        BindingResult bindingResult = mock(BindingResult.class);
+        when(ex.getBindingResult()).thenReturn(bindingResult);
+        when(bindingResult.getFieldErrors()).thenReturn(List.of(
+                new FieldError("obj", "nombre", "must not be blank"),
+                new FieldError("obj", "nombre", "size must be between 1 and 100")
+        ));
+
+        ResponseEntity<Map<String, Object>> response = handler.handleValidation(ex);
+
+        Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
+        assertThat(errors).hasSize(1).containsKey("nombre");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void handleConstraintViolation_duplicateField_keepsFirst() {
+        ConstraintViolation<?> v1 = mock(ConstraintViolation.class);
+        ConstraintViolation<?> v2 = mock(ConstraintViolation.class);
+        Path path1 = mock(Path.class);
+        Path path2 = mock(Path.class);
+        when(path1.toString()).thenReturn("nombre");
+        when(path2.toString()).thenReturn("nombre");
+        when(v1.getPropertyPath()).thenReturn(path1);
+        when(v2.getPropertyPath()).thenReturn(path2);
+        when(v1.getMessage()).thenReturn("error1");
+        when(v2.getMessage()).thenReturn("error2");
+
+        ConstraintViolationException ex = new ConstraintViolationException(Set.of(v1, v2));
+
+        ResponseEntity<Map<String, Object>> response = handler.handleConstraintViolation(ex);
+
+        Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
+        assertThat(errors).hasSize(1).containsKey("nombre");
+    }
+
+    @Test
+    void handleEquipoNotFound_returns404() {
+        ResponseEntity<Map<String, Object>> response =
+                handler.handleEquipoNotFound(new EquipoNotFoundException(42L));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).containsKey("error");
+        assertThat(response.getBody().get("error").toString()).contains("42");
+    }
+
+    @Test
+    void handleUnauthorizedEquipoAccess_returns403() {
+        ResponseEntity<Map<String, Object>> response =
+                handler.handleUnauthorizedEquipoAccess(new UnauthorizedEquipoAccessException());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody()).containsKey("error");
     }
 }
