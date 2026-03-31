@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Editar jugador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <style>
+    .edit-card {
+      padding: 28px 24px;
+      margin-bottom: var(--gap);
+    }
+
+    .foto-section {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 0.5px solid var(--glass-brd);
+    }
+
+    .foto-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pu), var(--bl));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--txt);
+      box-shadow: 0 0 24px var(--pu-glow);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .foto-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .foto-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .foto-hint {
+      font-size: 11px;
+      color: var(--txt3);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-field.full { grid-column: 1 / -1; }
+
+    .form-lbl {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--txt3);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .foto-section { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Editar jugador</div>
+      <div style="width:80px;"></div>
+    </header>
+
+    <div class="glass edit-card">
+      <div class="ptitle">Datos del jugador</div>
+
+      <!-- FOTO -->
+      <div class="foto-section">
+        <div class="foto-avatar" id="foto-avatar"></div>
+        <div class="foto-actions">
+          <input type="file" id="foto-input" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
+          <button class="btn" id="foto-btn">Cambiar foto</button>
+          <span class="foto-hint">JPG, WebP o PNG</span>
+        </div>
+      </div>
+
+      <!-- FORMULARIO -->
+      <form id="edit-form">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label class="form-lbl">Nombre *</label>
+            <input class="input" type="text" id="f-nombre" placeholder="Nombre del jugador" required />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Posición</label>
+            <input class="input" type="text" id="f-posicion" placeholder="Ej: Delantero" />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Dorsal</label>
+            <input class="input" type="number" id="f-dorsal" placeholder="Nº" min="1" max="99" />
+          </div>
+          <div class="form-field">
+            <label class="form-lbl">Edad</label>
+            <input class="input" type="number" id="f-edad" placeholder="Años" min="1" max="99" />
+          </div>
+        </div>
+
+        <div id="form-error" style="font-size:12px;color:var(--re);min-height:18px;margin-bottom:12px;"></div>
+
+        <div class="form-actions">
+          <button type="button" class="btn" id="back-btn-2">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const params     = new URLSearchParams(window.location.search);
+    const jugadorId  = params.get('jugadorId');
+    const equipoId   = params.get('equipoId');
+
+    if (!jugadorId || !equipoId) window.location.replace('/club.html');
+
+    const goBack = () => window.location.href = `/jugadores.html?equipoId=${equipoId}`;
+    document.getElementById('back-btn').addEventListener('click', goBack);
+    document.getElementById('back-btn-2').addEventListener('click', goBack);
+
+    // Foto
+    const fotoInput = document.getElementById('foto-input');
+    let fotoChanged = false;
+
+    document.getElementById('foto-btn').addEventListener('click', () => fotoInput.click());
+
+    fotoInput.addEventListener('change', () => {
+      const file = fotoInput.files[0];
+      if (!file) return;
+      fotoChanged = true;
+      const avatar = document.getElementById('foto-avatar');
+      avatar.innerHTML = `<img src="${URL.createObjectURL(file)}" />`;
+    });
+
+    // Cargar datos del jugador
+    document.addEventListener('DOMContentLoaded', async () => {
+      const jugador = await apiFetch(`/jugadores/${jugadorId}`);
+      if (!jugador) { goBack(); return; }
+
+      // Foto o iniciales
+      const avatar = document.getElementById('foto-avatar');
+      if (jugador.fotoUrl) {
+        avatar.innerHTML = `<img src="/api/jugadores/${jugadorId}/foto" />`;
+      } else {
+        avatar.textContent = jugador.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      }
+
+      // Precargar campos
+      document.getElementById('f-nombre').value   = jugador.nombre   ?? '';
+      document.getElementById('f-posicion').value = jugador.posicion  ?? '';
+      document.getElementById('f-dorsal').value   = jugador.dorsal    ?? '';
+      document.getElementById('f-edad').value     = jugador.edad      ?? '';
+    });
+
+    // Guardar
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn   = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const data = new FormData();
+      data.append('nombre', document.getElementById('f-nombre').value.trim());
+      const posicion = document.getElementById('f-posicion').value.trim();
+      const dorsal   = document.getElementById('f-dorsal').value;
+      const edad     = document.getElementById('f-edad').value;
+      if (posicion) data.append('posicion', posicion);
+      if (dorsal)   data.append('dorsal', dorsal);
+      if (edad)     data.append('edad', edad);
+      if (fotoChanged && fotoInput.files[0]) data.append('foto', fotoInput.files[0]);
+
+      try {
+        const res = await fetch(`/api/jugadores/${jugadorId}`, {
+          method: 'PUT',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') },
+          body: data
+        });
+        if (!res.ok) throw new Error('Error al guardar los cambios');
+        goBack();
+      } catch (err) {
+        errEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = 'Guardar cambios';
+      }
+    });
+  </script>
+
+</body>
+</html>
