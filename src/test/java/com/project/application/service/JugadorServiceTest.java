@@ -1,6 +1,7 @@
 package com.project.application.service;
 
 import com.project.application.port.in.CreateJugadorUseCase.CreateJugadorCommand;
+import com.project.application.port.in.UpdateJugadorUseCase.UpdateJugadorCommand;
 import com.project.application.port.out.FileStoragePort;
 import com.project.application.port.out.JugadorRepository;
 import com.project.domain.model.Jugador;
@@ -11,7 +12,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -63,5 +67,71 @@ class JugadorServiceTest {
 
         assertThat(result.getFotoUrl()).isNull();
         verify(fileStoragePort, never()).store(any(), eq("jugadores"));
+    }
+
+    @Test
+    void update_withNewFoto_storesNewFile() {
+        Jugador existing = buildJugador("jugadores/old.jpg");
+        when(jugadorRepository.findById(1L)).thenReturn(Optional.of(existing));
+        MultipartFile foto = mock(MultipartFile.class);
+        when(foto.isEmpty()).thenReturn(false);
+        when(fileStoragePort.store(foto, "jugadores")).thenReturn("jugadores/new.jpg");
+        when(jugadorRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Jugador result = jugadorService.update(new UpdateJugadorCommand(1L, "Leo", "DEL", 10, 25, foto));
+
+        assertThat(result.getFotoUrl()).isEqualTo("jugadores/new.jpg");
+        verify(fileStoragePort).store(foto, "jugadores");
+    }
+
+    @Test
+    void update_withoutFoto_keepsExistingUrl() {
+        Jugador existing = buildJugador("jugadores/old.jpg");
+        when(jugadorRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(jugadorRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Jugador result = jugadorService.update(new UpdateJugadorCommand(1L, "Leo", "DEL", 10, 25, null));
+
+        assertThat(result.getFotoUrl()).isEqualTo("jugadores/old.jpg");
+        verify(fileStoragePort, never()).store(any(), any());
+    }
+
+    @Test
+    void update_withEmptyFoto_keepsExistingUrl() {
+        Jugador existing = buildJugador("jugadores/old.jpg");
+        when(jugadorRepository.findById(1L)).thenReturn(Optional.of(existing));
+        MultipartFile foto = mock(MultipartFile.class);
+        when(foto.isEmpty()).thenReturn(true);
+        when(jugadorRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Jugador result = jugadorService.update(new UpdateJugadorCommand(1L, "Leo", "DEL", 10, 25, foto));
+
+        assertThat(result.getFotoUrl()).isEqualTo("jugadores/old.jpg");
+        verify(fileStoragePort, never()).store(any(), any());
+    }
+
+    @Test
+    void update_jugadorNotFound_throwsRuntimeException() {
+        when(jugadorRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> jugadorService.update(
+                new UpdateJugadorCommand(99L, "Leo", "DEL", 10, 25, null)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("no encontrado");
+    }
+
+    @Test
+    void update_samePhotoUrl_preservesFotoConvertida() {
+        Jugador existing = Jugador.builder().id(1L).nombre("Leo").posicion("DEL")
+                .dorsal(10).edad(25).totalGoals(5).partidosJugados(3)
+                .golPorPartido(1).fotoUrl("jugadores/old.jpg").fotoConvertida(true).equipoId(5L).build();
+        when(jugadorRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(jugadorRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Jugador result = jugadorService.update(new UpdateJugadorCommand(1L, "Leo Updated", "DEL", 10, 25, null));
+
+        assertThat(result.isFotoConvertida()).isTrue();
+        assertThat(result.getTotalGoals()).isEqualTo(5);
+        assertThat(result.getPartidosJugados()).isEqualTo(3);
     }
 }

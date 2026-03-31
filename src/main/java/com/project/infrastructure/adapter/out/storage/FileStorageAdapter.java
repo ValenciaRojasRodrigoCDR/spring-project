@@ -42,9 +42,13 @@ public class FileStorageAdapter implements FileStoragePort {
     }
 
     private String getExtension(String originalFilename) {
-        if (originalFilename == null) return "";
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("Tipo de fichero no permitido: nombre nulo");
+        }
         int dot = originalFilename.lastIndexOf(".");
-        if (dot < 0) return "";
+        if (dot < 0) {
+            throw new IllegalArgumentException("Tipo de fichero no permitido: sin extensión");
+        }
         String ext = originalFilename.substring(dot).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Tipo de fichero no permitido: " + ext);
