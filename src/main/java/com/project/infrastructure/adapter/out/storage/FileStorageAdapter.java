@@ -9,10 +9,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
 public class FileStorageAdapter implements FileStoragePort {
+
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
 
     @Value("${app.upload-dir}")
     private String uploadDir;
@@ -22,17 +25,30 @@ public class FileStorageAdapter implements FileStoragePort {
         try {
             String extension = getExtension(file.getOriginalFilename());
             String filename = UUID.randomUUID() + extension;
-            Path dir = Paths.get(uploadDir, folder);
+            Path base = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path dir = base.resolve(folder).normalize();
+            Path dest = dir.resolve(filename).normalize();
+
+            if (!dest.startsWith(base)) {
+                throw new IllegalArgumentException("Ruta de fichero no permitida");
+            }
+
             Files.createDirectories(dir);
-            Files.copy(file.getInputStream(), dir.resolve(filename));
+            Files.copy(file.getInputStream(), dest);
             return folder + "/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Error al guardar el fichero", e);
         }
     }
 
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) return "";
-        return filename.substring(filename.lastIndexOf("."));
+    private String getExtension(String originalFilename) {
+        if (originalFilename == null) return "";
+        int dot = originalFilename.lastIndexOf(".");
+        if (dot < 0) return "";
+        String ext = originalFilename.substring(dot).toLowerCase();
+        if (!ALLOWED_EXTENSIONS.contains(ext)) {
+            throw new IllegalArgumentException("Tipo de fichero no permitido: " + ext);
+        }
+        return ext;
     }
 }
