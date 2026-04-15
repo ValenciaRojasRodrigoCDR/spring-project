@@ -379,8 +379,16 @@
       </form>
     </div>
 
-    <!-- LISTA JUGADORES -->
-    <div id="content"></div>
+	<!-- LISTA JUGADORES CON BOTONES LATERALES -->
+	    <div style="display:flex; align-items:center; gap:8px;">
+	      <button class="btn" id="scroll-left-btn" aria-label="Desplazar izquierda"
+	        style="flex-shrink:0; height:48px; width:36px; padding:0; font-size:18px;">&#8592;</button>
+
+	      <div id="content" style="flex:1; min-width:0;"></div>
+
+	      <button class="btn" id="scroll-right-btn" aria-label="Desplazar derecha"
+	        style="flex-shrink:0; height:48px; width:36px; padding:0; font-size:18px;">&#8594;</button>
+	    </div>
 
     <!-- PANEL DETALLE -->
     <div class="glass detail-panel" id="detail-panel">
@@ -589,15 +597,39 @@
         </div>`;
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Título con nombre del equipo
-      const equipos = await apiFetch('/equipos');
-      if (equipos) {
-        const equipo = equipos.find(e => String(e.id) === equipoId);
-        if (equipo) document.getElementById('header-title').textContent = equipo.nombre;
-      }
-      await loadJugadores();
-    });
+	document.addEventListener('DOMContentLoaded', async () => {
+	      // Título con nombre del equipo
+	      const equipos = await apiFetch('/equipos');
+	      if (equipos) {
+	        const equipo = equipos.find(e => String(e.id) === equipoId);
+	        if (equipo) document.getElementById('header-title').textContent = equipo.nombre;
+	      }
+	      await loadJugadores();
+
+	      // Scroll con rueda del ratón y botones
+	      function getGrid() {
+	        return document.querySelector('.player-grid');
+	      }
+
+	      document.addEventListener('wheel', (e) => {
+	        const grid = getGrid();
+	        if (!grid) return;
+	        if (grid.contains(e.target) || e.target === grid) {
+	          e.preventDefault();
+	          grid.scrollLeft += e.deltaY;
+	        }
+	      }, { passive: false });
+
+	      document.getElementById('scroll-left-btn').addEventListener('click', () => {
+	        const grid = getGrid();
+	        if (grid) grid.scrollBy({ left: -400, behavior: 'smooth' });
+	      });
+
+	      document.getElementById('scroll-right-btn').addEventListener('click', () => {
+	        const grid = getGrid();
+	        if (grid) grid.scrollBy({ left: 400, behavior: 'smooth' });
+	      });
+	    });
   </script>
 
 </body>
