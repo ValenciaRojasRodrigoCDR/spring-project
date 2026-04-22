@@ -12,7 +12,8 @@ import lombok.*;
 public class JugadorEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "jugadores_seq_gen")
+    @SequenceGenerator(name = "jugadores_seq_gen", sequenceName = "jugadores_seq", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false)

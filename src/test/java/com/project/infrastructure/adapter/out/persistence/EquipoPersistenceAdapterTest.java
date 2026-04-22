@@ -37,14 +37,14 @@ class EquipoPersistenceAdapterTest {
     @Test
     void save_mapsToEntityAndReturnsDomain() {
         EquipoEntity entity = buildEntity();
-        when(jpaRepository.save(any())).thenReturn(entity);
+        when(jpaRepository.saveAndFlush(any())).thenReturn(entity);
 
         Equipo result = adapter.save(buildDomain());
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getNombre()).isEqualTo("FC Test");
         assertThat(result.getUserId()).isEqualTo(10L);
-        verify(jpaRepository).save(any());
+        verify(jpaRepository).saveAndFlush(any());
     }
 
     @Test

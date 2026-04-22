@@ -34,7 +34,7 @@ class ImportarClubServiceTest {
                 .totalGoals(5).partidosJugados(10).golPorPartido(0.5).equipoId(1L).build();
 
         when(equipoRepository.save(any())).thenReturn(equipo);
-        when(jugadorRepository.save(any())).thenReturn(jugador);
+        when(jugadorRepository.saveAll(any())).thenReturn(List.of(jugador));
 
         List<JugadorData> jugadoresData = List.of(new JugadorData("Leo", 5, 10, 0.5));
         ImportarClubCommand command = new ImportarClubCommand("FC", "2024", "L1", "D", 10L, jugadoresData);
@@ -45,7 +45,7 @@ class ImportarClubServiceTest {
         assertThat(result.jugadores()).hasSize(1);
         assertThat(result.jugadores().get(0).getNombre()).isEqualTo("Leo");
         verify(equipoRepository).save(any());
-        verify(jugadorRepository, times(1)).save(any());
+        verify(jugadorRepository).saveAll(any());
     }
 
     @Test
@@ -60,6 +60,6 @@ class ImportarClubServiceTest {
 
         assertThat(result.equipo().getNombre()).isEqualTo("FC2");
         assertThat(result.jugadores()).isEmpty();
-        verify(jugadorRepository, never()).save(any());
+        verify(jugadorRepository, never()).saveAll(any());
     }
 }

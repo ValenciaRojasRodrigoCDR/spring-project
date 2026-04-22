@@ -16,7 +16,7 @@ public class EquipoPersistenceAdapter implements EquipoRepository {
 
     @Override
     public Equipo save(Equipo equipo) {
-        return toDomain(jpaRepository.save(toEntity(equipo)));
+        return toDomain(jpaRepository.saveAndFlush(toEntity(equipo)));
     }
 
     @Override

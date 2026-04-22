@@ -1,3 +1,6 @@
+CREATE SEQUENCE IF NOT EXISTS equipos_seq   START WITH 1 INCREMENT BY 50;
+CREATE SEQUENCE IF NOT EXISTS jugadores_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS users (
     id          BIGINT       AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE,
@@ -10,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS equipos (
-    id          BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    id          BIGINT        PRIMARY KEY,
     nombre      VARCHAR(150)  NOT NULL,
     temporada   VARCHAR(20),
     liga        VARCHAR(150),
@@ -21,7 +24,7 @@ CREATE TABLE IF NOT EXISTS equipos (
 );
 
 CREATE TABLE IF NOT EXISTS jugadores (
-    id                BIGINT         AUTO_INCREMENT PRIMARY KEY,
+    id                BIGINT         DEFAULT NEXT VALUE FOR jugadores_seq PRIMARY KEY,
     nombre            VARCHAR(150)   NOT NULL,
     posicion          VARCHAR(50),
     dorsal            INT,

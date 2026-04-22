@@ -3,6 +3,7 @@ package com.project.infrastructure.adapter.out.persistence;
 import com.project.application.port.out.JugadorRepository;
 import com.project.domain.model.Jugador;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,10 +42,29 @@ import java.util.Optional;
 public class JugadorPersistenceAdapter implements JugadorRepository {
 
     private final JugadorJpaRepository jpaRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public Jugador save(Jugador jugador) {
         return toDomain(jpaRepository.save(toEntity(jugador)));
+    }
+
+    @Override
+    public List<Jugador> saveAll(List<Jugador> jugadores) {
+        if (jugadores.isEmpty()) return List.of();
+        jdbcTemplate.batchUpdate(
+                "INSERT INTO jugadores (nombre, total_goals, partidos_jugados, gol_por_partido, equipo_id) VALUES (?, ?, ?, ?, ?)",
+                jugadores,
+                jugadores.size(),
+                (ps, j) -> {
+                    ps.setString(1, j.getNombre());
+                    ps.setInt(2, j.getTotalGoals());
+                    ps.setInt(3, j.getPartidosJugados());
+                    ps.setDouble(4, j.getGolPorPartido());
+                    ps.setLong(5, j.getEquipoId());
+                });
+        return jpaRepository.findByEquipoId(jugadores.get(0).getEquipoId())
+                .stream().map(this::toDomain).toList();
     }
 
     @Override

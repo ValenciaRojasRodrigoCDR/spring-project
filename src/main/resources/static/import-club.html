@@ -141,6 +141,7 @@
 
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
@@ -169,16 +170,9 @@
       fileInput.value = '';
     });
 
-    const ALLOWED_TYPES = new Set([
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel'
-    ]);
-
     function isExcel(file) {
       const name = file.name.toLowerCase();
-      const validExt  = name.endsWith('.xlsx') || name.endsWith('.xls');
-      const validType = ALLOWED_TYPES.has(file.type);
-      return validExt && validType;
+      return name.endsWith('.xlsx') || name.endsWith('.xls');
     }
 
     function addFiles(fileList) {
@@ -243,16 +237,150 @@
 
       let lastData = null;
       for (const [, file] of fileMap) {
-        const data = await apiUpload('/excel/upload', file);
-        if (!data) { errEl.textContent = `Error al procesar: ${file.name}`; }
-        else lastData = data;
+        try {
+          lastData = await parseExcelLocalmente(file);
+        } catch (e) {
+          errEl.textContent = `Error al procesar: ${file.name}`;
+        }
       }
 
       btn.disabled = false;
       btn.textContent = 'Importar';
 
-      if (lastData) renderPreview(lastData);
+      if (lastData) {
+        renderPreview(lastData);
+      } else {
+        document.getElementById('preview-section').style.display = 'none';
+        document.getElementById('export-section').style.display  = 'none';
+        lastPlayers = [];
+      }
     });
+
+    function parseExcelLocalmente(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
+            const sheet    = workbook.Sheets[workbook.SheetNames[0]];
+            const range    = XLSX.utils.decode_range(sheet['!ref']);
+
+            function cl(r, c) { return sheet[XLSX.utils.encode_cell({ r, c })]; }
+
+            function cellText(cell) {
+              if (!cell) return null;
+              if (cell.t === 's') { const v = cell.v.trim(); return v || null; }
+              if (cell.t === 'n') { const v = cell.v; return v === Math.floor(v) ? String(Math.floor(v)) : String(v); }
+              return null;
+            }
+
+            function clStr(r, c)  { return cellText(cl(r, c)); }
+            function clInt(r, c)  { const x = cl(r,c); return (x && x.t === 'n') ? Math.round(x.v) : 0; }
+            function clDbl(r, c)  { const x = cl(r,c); return (x && x.t === 'n') ? x.v : 0; }
+
+            function clDate(r, c) {
+              const x = cl(r, c);
+              if (!x) return null;
+              if (x.t === 'd') {
+                const d = x.v;
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+              }
+              if (x.t === 's' && /^\d{4}-\d{2}-\d{2}$/.test(x.v.trim())) return x.v.trim();
+              return null;
+            }
+
+            // ── Detectar columnas de jornada y estadísticas desde cabecera (fila 1) ──
+            const jornadaCols = [], jornadaNames = [];
+            let totalCol = -1, partidosCol = -1, golPorPartidoCol = -1;
+
+            for (let c = 0; c <= range.e.c; c++) {
+              const cell = cl(1, c);
+              if (!cell) continue;
+              const v = String(cell.t === 's' ? cell.v : cell.v).trim();
+              if (/^J\d+$/.test(v)) {
+                jornadaCols.push(c); jornadaNames.push(v);
+              } else if (/^TOTAL$/i.test(v))                    { totalCol          = c; }
+              else if (/PARTIDOS|^PJ$/i.test(v))                { partidosCol       = c; }
+              else if (/GOL.*PARTIDO|^G\/P$|^G\/J$/i.test(v))  { golPorPartidoCol  = c; }
+            }
+
+            // ── Jugadores: escanear desde fila 2 hasta fila vacía o etiqueta conocida ──
+            const NON_PLAYER = /^(TOTAL|RIVAL(ES)?|FECHA(S)?|RESULTADO)$/i;
+            const players = [];
+            let lastPlayerRow = 1;
+
+            for (let r = 2; r <= range.e.r; r++) {
+              const name = clStr(r, 0);
+              if (!name || NON_PLAYER.test(name)) break;
+
+              lastPlayerRow = r;
+              const jornadas = {};
+              jornadaCols.forEach((col, i) => {
+                const x = cl(r, col);
+                let status = 'PENDING', goals = 0;
+                if (x) {
+                  if (x.t === 'n') { status = 'GOALS'; goals = Math.round(x.v); }
+                  else if (x.t === 's') {
+                    const v = x.v.trim();
+                    if (v.toLowerCase() === 'x')                  status = 'ABSENT';
+                    else if (v.toUpperCase() === 'NO PRESENTADO') status = 'NO_PRESENTADO';
+                    else { const n = parseInt(v, 10); if (!isNaN(n)) { status = 'GOALS'; goals = n; } }
+                  }
+                }
+                jornadas[jornadaNames[i]] = { status, goals };
+              });
+
+              players.push({
+                name,
+                jornadas,
+                totalGoals:      totalCol        >= 0 ? clInt(r, totalCol)        : 0,
+                partidosJugados: partidosCol     >= 0 ? clInt(r, partidosCol)     : 0,
+                golPorPartido:   golPorPartidoCol >= 0 ? clDbl(r, golPorPartidoCol) : 0
+              });
+            }
+
+            // ── Detectar filas de partidos después de los jugadores ──────────────────
+            let totalsRow = -1, rivalsRow = -1, datesRow = -1, resultsRow = -1;
+
+            for (let r = lastPlayerRow + 1; r <= range.e.r; r++) {
+              const label = clStr(r, 0);
+              if (label) {
+                if (/^TOTAL$/i.test(label)      && totalsRow  < 0) totalsRow  = r;
+                if (/^RIVAL(ES)?$/i.test(label) && rivalsRow  < 0) rivalsRow  = r;
+                if (/^FECHA(S)?$/i.test(label)  && datesRow   < 0) datesRow   = r;
+                if (/^RESULTADO/i.test(label)   && resultsRow < 0) resultsRow = r;
+              } else {
+                const isDateRow = jornadaCols.some(c => {
+                  const x = cl(r, c);
+                  return x && (x.t === 'd' || (x.t === 's' && /^\d{4}-\d{2}-\d{2}$/.test(x.v.trim())));
+                });
+                const isStrRow = jornadaCols.some(c => { const x = cl(r, c); return x && x.t === 's' && x.v.trim(); });
+                if (isDateRow && datesRow < 0) datesRow = r;
+                else if (isStrRow && rivalsRow < 0) rivalsRow = r;
+              }
+            }
+
+            // ── Partidos ─────────────────────────────────────────────────────────────
+            const matches = [];
+            jornadaCols.forEach((col, i) => {
+              const rival  = rivalsRow  >= 0 ? clStr(rivalsRow,  col) : null;
+              const date   = datesRow   >= 0 ? clDate(datesRow,  col) : null;
+              const result = resultsRow >= 0 ? clStr(resultsRow, col) : null;
+              const goals  = totalsRow  >= 0 ? clInt(totalsRow,  col) : 0;
+              if (rival || date || result) {
+                matches.push({ jornada: jornadaNames[i], rival, date, result, teamTotalGoals: goals });
+              }
+            });
+
+            resolve({ players, matches });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error('No se pudo leer el fichero'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
 
     // ── Render ───────────────────────────────────────────────────
     function renderPreview(data) {
@@ -305,7 +433,6 @@
     }
 
     // ── Exportar ─────────────────────────────────────────────────
-    // TODO: mejorar los tiempos de exportación del archivo
     let lastPlayers = [];
 
     document.getElementById('exportar-btn').addEventListener('click', async () => {
@@ -335,17 +462,16 @@
         }))
       };
 
-      const result = await apiFetch('/equipos/importar', { method: 'POST', body: JSON.stringify(payload) });
+      const job = await apiFetch('/equipos/importar', { method: 'POST', body: JSON.stringify(payload) });
 
-      btn.disabled = false;
-      btn.textContent = 'Exportar a mi club';
-
-      if (!result) {
-        exportErr.textContent = 'Error al guardar el club.';
-      } else {
-        exportOk.textContent = `Club "${result.nombre}" guardado. Redirigiendo…`;
-        setTimeout(() => window.location.replace('/index.html'), 1200);
+      if (!job?.jobId) {
+        btn.disabled = false;
+        btn.textContent = 'Exportar a mi club';
+        exportErr.textContent = 'Error al iniciar la importación.';
+        return;
       }
+
+      window.location.replace('/index.html');
     });
   </script>
 
