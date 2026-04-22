@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface JugadorRepository {
     Jugador save(Jugador jugador);
+    List<Jugador> saveAll(List<Jugador> jugadores);
     List<Jugador> findByEquipoId(Long equipoId);
     Optional<Jugador> findById(Long id);
 }

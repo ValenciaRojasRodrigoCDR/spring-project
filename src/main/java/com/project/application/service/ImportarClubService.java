@@ -7,6 +7,7 @@ import com.project.domain.model.Equipo;
 import com.project.domain.model.Jugador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class ImportarClubService implements ImportarClubUseCase {
     private final JugadorRepository jugadorRepository;
 
     @Override
+    @Transactional
     public ImportarClubResult importar(ImportarClubCommand command) {
         Equipo equipo = equipoRepository.save(Equipo.builder()
                 .nombre(command.nombre())
@@ -27,15 +29,17 @@ public class ImportarClubService implements ImportarClubUseCase {
                 .userId(command.userId())
                 .build());
 
-        List<Jugador> jugadores = command.jugadores().stream()
-                .map(j -> jugadorRepository.save(Jugador.builder()
-                        .nombre(j.nombre())
-                        .totalGoals(j.totalGoals())
-                        .partidosJugados(j.partidosJugados())
-                        .golPorPartido(j.golPorPartido())
-                        .equipoId(equipo.getId())
-                        .build()))
-                .toList();
+        var jugadoresData = command.jugadores();
+        List<Jugador> jugadores = jugadoresData.isEmpty() ? List.of() : jugadorRepository.saveAll(
+                jugadoresData.stream()
+                        .map(j -> Jugador.builder()
+                                .nombre(j.nombre())
+                                .totalGoals(j.totalGoals())
+                                .partidosJugados(j.partidosJugados())
+                                .golPorPartido(j.golPorPartido())
+                                .equipoId(equipo.getId())
+                                .build())
+                        .toList());
 
         return new ImportarClubResult(equipo, jugadores);
     }

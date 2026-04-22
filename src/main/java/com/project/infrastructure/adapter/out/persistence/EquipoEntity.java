@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
 public class EquipoEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "equipos_seq_gen")
+    @SequenceGenerator(name = "equipos_seq_gen", sequenceName = "equipos_seq", allocationSize = 50)
     private Long id;
 
     @Column(nullable = false)
