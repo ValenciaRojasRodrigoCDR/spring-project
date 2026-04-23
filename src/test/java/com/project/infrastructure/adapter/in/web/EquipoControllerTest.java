@@ -3,6 +3,8 @@ package com.project.infrastructure.adapter.in.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.application.port.in.CreateEquipoUseCase;
 import com.project.application.port.in.GetEquiposQuery;
+import com.project.application.port.in.GetEstadisticasAvanzadasQuery;
+import com.project.application.port.in.GetEstadisticasAvanzadasQuery.Result;
 import com.project.application.port.in.GetJugadoresQuery;
 import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.UpdateEquipoUseCase;
@@ -35,11 +37,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class EquipoControllerTest {
 
-    @Mock CreateEquipoUseCase createEquipoUseCase;
-    @Mock UpdateEquipoUseCase updateEquipoUseCase;
-    @Mock GetEquiposQuery getEquiposQuery;
-    @Mock GetUserQuery getUserQuery;
-    @Mock GetJugadoresQuery getJugadoresQuery;
+    @Mock CreateEquipoUseCase           createEquipoUseCase;
+    @Mock UpdateEquipoUseCase           updateEquipoUseCase;
+    @Mock GetEquiposQuery               getEquiposQuery;
+    @Mock GetUserQuery                  getUserQuery;
+    @Mock GetJugadoresQuery             getJugadoresQuery;
+    @Mock GetEstadisticasAvanzadasQuery getEstadisticasAvanzadasQuery;
     @InjectMocks EquipoController equipoController;
 
     private MockMvc mockMvc;
@@ -162,5 +165,40 @@ class EquipoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nombre").value("Leo"))
                 .andExpect(jsonPath("$[0].dorsal").value(10));
+    }
+
+    @Test
+    void estadisticasAvanzadas_returnsOkWithMappedData() throws Exception {
+        GetEstadisticasAvanzadasQuery.PosicionStat posicion =
+                new GetEstadisticasAvanzadasQuery.PosicionStat("DEL", 2, 8, 80.0);
+        GetEstadisticasAvanzadasQuery.JugadorStat eficiente =
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Leo", "2.00 goles/partido");
+
+        Result result = new Result(
+                25.0, 4.0, 7.5, 1,
+                List.of(posicion),
+                eficiente,
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Marco", "5 partidos"),
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Javi",  "19 años"),
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Paco",  "35 años"),
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Javi",  "Dorsal 1"),
+                new GetEstadisticasAvanzadasQuery.JugadorStat("Paco",  "Dorsal 99")
+        );
+        when(getEstadisticasAvanzadasQuery.get(1L)).thenReturn(result);
+
+        mockMvc.perform(get("/api/equipos/1/estadisticas-avanzadas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.promedioEdad").value(25.0))
+                .andExpect(jsonPath("$.promedioGoles").value(4.0))
+                .andExpect(jsonPath("$.promedioPartidos").value(7.5))
+                .andExpect(jsonPath("$.jugadoresSinGoles").value(1))
+                .andExpect(jsonPath("$.porPosicion[0].posicion").value("DEL"))
+                .andExpect(jsonPath("$.porPosicion[0].porcentajeGoles").value(80.0))
+                .andExpect(jsonPath("$.masEficiente.nombre").value("Leo"))
+                .andExpect(jsonPath("$.masEficiente.valor").value("2.00 goles/partido"))
+                .andExpect(jsonPath("$.masJoven.nombre").value("Javi"))
+                .andExpect(jsonPath("$.masVeterano.nombre").value("Paco"))
+                .andExpect(jsonPath("$.dorsalMasBajo.valor").value("Dorsal 1"))
+                .andExpect(jsonPath("$.dorsalMasAlto.valor").value("Dorsal 99"));
     }
 }
