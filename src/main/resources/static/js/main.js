@@ -196,7 +196,7 @@ async function apiUpload(path, file) {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       body: form,
     });
-    if (res.status === 401) { window.location.replace('/login.html'); return null; }
+    if (res.status === 401) { localStorage.removeItem('jwt_token'); window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -216,7 +216,7 @@ async function apiFetch(path, options = {}) {
       },
       ...options,
     });
-    if (res.status === 401) { window.location.replace('/login.html'); return null; }
+    if (res.status === 401) { localStorage.removeItem('jwt_token'); window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
