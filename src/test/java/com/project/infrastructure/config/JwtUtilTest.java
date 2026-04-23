@@ -10,14 +10,11 @@ class JwtUtilTest {
 
     private JwtUtil jwtUtil;
 
-    // Base64 encoded secret, at least 256 bits for HS256
-    private static final String SECRET = "dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RzLW11c3QtYmUtbG9uZy1lbm91Z2g=";
-
     @BeforeEach
     void setUp() {
         jwtUtil = new JwtUtil();
-        ReflectionTestUtils.setField(jwtUtil, "secret", SECRET);
         ReflectionTestUtils.setField(jwtUtil, "expirationMs", 3600000L);
+        jwtUtil.init();
     }
 
     @Test
