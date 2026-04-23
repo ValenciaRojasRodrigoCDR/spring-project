@@ -2,11 +2,13 @@ package com.project.infrastructure.adapter.in.web;
 
 import com.project.application.port.in.CreateEquipoUseCase;
 import com.project.application.port.in.GetEquiposQuery;
+import com.project.application.port.in.GetEstadisticasAvanzadasQuery;
 import com.project.application.port.in.GetJugadoresQuery;
 import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.UpdateEquipoUseCase;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
 import com.project.infrastructure.adapter.in.web.dto.EquipoResponse;
+import com.project.infrastructure.adapter.in.web.dto.EstadisticasAvanzadasResponse;
 import com.project.infrastructure.adapter.in.web.dto.JugadorResponse;
 import com.project.infrastructure.adapter.in.web.dto.UpdateEquipoRequest;
 import jakarta.validation.Valid;
@@ -23,11 +25,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EquipoController {
 
-    private final CreateEquipoUseCase createEquipoUseCase;
-    private final UpdateEquipoUseCase updateEquipoUseCase;
-    private final GetEquiposQuery     getEquiposQuery;
-    private final GetUserQuery        getUserQuery;
-    private final GetJugadoresQuery   getJugadoresQuery;
+    private final CreateEquipoUseCase            createEquipoUseCase;
+    private final UpdateEquipoUseCase            updateEquipoUseCase;
+    private final GetEquiposQuery                getEquiposQuery;
+    private final GetUserQuery                   getUserQuery;
+    private final GetJugadoresQuery              getJugadoresQuery;
+    private final GetEstadisticasAvanzadasQuery  getEstadisticasAvanzadasQuery;
 
     @GetMapping
     public ResponseEntity<List<EquipoResponse>> list(Authentication authentication) {
@@ -64,6 +67,28 @@ public class EquipoController {
                         j.getTotalGoals(), j.getPartidosJugados(), j.getGolPorPartido(), j.getFotoUrl()))
                 .toList();
         return ResponseEntity.ok(jugadores);
+    }
+
+    @GetMapping("/{id}/estadisticas-avanzadas")
+    public ResponseEntity<EstadisticasAvanzadasResponse> estadisticasAvanzadas(@PathVariable Long id) {
+        GetEstadisticasAvanzadasQuery.Result r = getEstadisticasAvanzadasQuery.get(id);
+        List<EstadisticasAvanzadasResponse.PosicionStat> posiciones = r.porPosicion().stream()
+                .map(p -> new EstadisticasAvanzadasResponse.PosicionStat(
+                        p.posicion(), p.jugadores(), p.goles(), p.porcentajeGoles()))
+                .toList();
+        return ResponseEntity.ok(new EstadisticasAvanzadasResponse(
+                r.promedioEdad(), r.promedioGoles(), r.promedioPartidos(), r.jugadoresSinGoles(),
+                posiciones,
+                toJugadorStat(r.masEficiente()),
+                toJugadorStat(r.masPartidosSinMarcar()),
+                toJugadorStat(r.masJoven()),
+                toJugadorStat(r.masVeterano()),
+                toJugadorStat(r.dorsalMasBajo()),
+                toJugadorStat(r.dorsalMasAlto())));
+    }
+
+    private EstadisticasAvanzadasResponse.JugadorStat toJugadorStat(GetEstadisticasAvanzadasQuery.JugadorStat s) {
+        return new EstadisticasAvanzadasResponse.JugadorStat(s.nombre(), s.valor());
     }
 
     private EquipoResponse toResponse(com.project.domain.model.Equipo e) {

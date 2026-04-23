@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -22,7 +23,10 @@
     <header class="hdr" style="justify-content:space-between;">
       <button class="btn" id="back-btn">← Volver</button>
       <div class="logo-txt" id="header-title">Estadísticas</div>
-      <button class="btn" id="jugadores-btn">👥 Jugadores</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="avanzadas-btn">Estadísticas avanzadas</button>
+        <button class="btn" id="jugadores-btn">👥 Jugadores</button>
+      </div>
     </header>
 
     <!-- KPIs -->
@@ -83,7 +87,95 @@
       </table>
     </div>
 
-    <!-- TODO: añadir más estadísticas (rendimiento por jornada, gráficas de evolución, comparativa jugadores, etc.) -->
+    <!-- ESTADÍSTICAS AVANZADAS -->
+    <div class="glass full-panel" id="panel-avanzadas" style="display:none;">
+      <div class="ptitle">Estadísticas avanzadas</div>
+
+      <!-- KPIs básicos -->
+      <div class="kpi-strip" style="margin-bottom:20px;">
+        <div class="kpi glass k1">
+          <div class="kpi-lbl">Promedio edad</div>
+          <div class="kpi-val" id="av-edad">—</div>
+          <div class="kpi-sub">años</div>
+        </div>
+        <div class="kpi glass k2">
+          <div class="kpi-lbl">Promedio goles</div>
+          <div class="kpi-val" id="av-goles">—</div>
+          <div class="kpi-sub">por jugador</div>
+        </div>
+        <div class="kpi glass k3">
+          <div class="kpi-lbl">Promedio partidos</div>
+          <div class="kpi-val" id="av-partidos">—</div>
+          <div class="kpi-sub">por jugador</div>
+        </div>
+        <div class="kpi glass k4">
+          <div class="kpi-lbl">Sin goles</div>
+          <div class="kpi-val" id="av-sin-goles">—</div>
+          <div class="kpi-sub">jugadores</div>
+        </div>
+      </div>
+
+      <!-- Rendimiento individual -->
+      <div class="ptitle" style="font-size:13px;margin-bottom:10px;">Rendimiento individual</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px;">
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Más eficiente</div>
+          <div id="ri-eficiente-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-eficiente-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Más partidos sin marcar</div>
+          <div id="ri-sinmarcar-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-sinmarcar-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Más joven</div>
+          <div id="ri-joven-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-joven-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Más veterano</div>
+          <div id="ri-veterano-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-veterano-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Dorsal más bajo</div>
+          <div id="ri-dorsal-bajo-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-dorsal-bajo-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+        <div class="glass" style="padding:14px;border-radius:12px;">
+          <div style="font-size:10px;color:var(--txt-sub);margin-bottom:4px;">Dorsal más alto</div>
+          <div id="ri-dorsal-alto-nombre" style="font-size:13px;font-weight:600;">—</div>
+          <div id="ri-dorsal-alto-valor" style="font-size:11px;color:var(--pu);margin-top:2px;">—</div>
+        </div>
+      </div>
+
+      <!-- Gráficas de barras -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+        <div>
+          <div class="ptitle" style="font-size:13px;margin-bottom:8px;">Goles por jugador</div>
+          <div style="height:200px;"><canvas id="chart-goles"></canvas></div>
+        </div>
+        <div>
+          <div class="ptitle" style="font-size:13px;margin-bottom:8px;">Partidos jugados por jugador</div>
+          <div style="height:200px;"><canvas id="chart-partidos"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Tabla por posición -->
+      <div class="ptitle" style="font-size:13px;margin-bottom:8px;">Goles por posición</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Posición</th>
+            <th class="tr">Jugadores</th>
+            <th class="tr">Goles</th>
+            <th class="tr">% del total</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-posicion"></tbody>
+      </table>
+    </div>
 
   </div>
 
@@ -104,6 +196,58 @@
       window.location.href = `/jugadores.html?equipoId=${equipoId}&from=estadisticas`;
     });
 
+    let avanzadasCargadas = false;
+    document.getElementById('avanzadas-btn').addEventListener('click', async () => {
+      const panel = document.getElementById('panel-avanzadas');
+      const visible = panel.style.display !== 'none';
+      panel.style.display = visible ? 'none' : 'block';
+      if (visible || avanzadasCargadas) return;
+
+      const data = await apiFetch(`/equipos/${equipoId}/estadisticas-avanzadas`);
+      if (!data) return;
+      avanzadasCargadas = true;
+
+      // KPIs básicos
+      document.getElementById('av-edad').textContent      = data.promedioEdad;
+      document.getElementById('av-goles').textContent     = data.promedioGoles;
+      document.getElementById('av-partidos').textContent  = data.promedioPartidos;
+      document.getElementById('av-sin-goles').textContent = data.jugadoresSinGoles;
+
+      // Rendimiento individual
+      const ri = [
+        ['eficiente',   data.masEficiente],
+        ['sinmarcar',   data.masPartidosSinMarcar],
+        ['joven',       data.masJoven],
+        ['veterano',    data.masVeterano],
+        ['dorsal-bajo', data.dorsalMasBajo],
+        ['dorsal-alto', data.dorsalMasAlto],
+      ];
+      ri.forEach(([key, stat]) => {
+        document.getElementById(`ri-${key}-nombre`).textContent = stat?.nombre ?? '—';
+        document.getElementById(`ri-${key}-valor`).textContent  = stat?.valor  ?? '—';
+      });
+
+      // Gráficas de barras (datos de jugadores ya cargados en la página)
+      if (window._jugadores && window._jugadores.length) {
+        const porGoles    = [...window._jugadores].sort((a, b) => b.totalGoals - a.totalGoals);
+        const porPartidos = [...window._jugadores].sort((a, b) => b.partidosJugados - a.partidosJugados);
+        createBarChart('chart-goles',    porGoles.map(j => j.nombre),    porGoles.map(j => j.totalGoals));
+        createBarChart('chart-partidos', porPartidos.map(j => j.nombre), porPartidos.map(j => j.partidosJugados));
+      }
+
+      // Tabla posición con %
+      const tbody = document.getElementById('tabla-posicion');
+      (data.porPosicion || []).forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.posicion}</td>
+          <td class="tr">${p.jugadores}</td>
+          <td class="tr">${p.goles}</td>
+          <td class="tr">${p.porcentajeGoles}%</td>`;
+        tbody.appendChild(tr);
+      });
+    });
+
     document.addEventListener('DOMContentLoaded', async () => {
       const [equipo, jugadores] = await Promise.all([
         apiFetch(`/equipos`),
@@ -116,6 +260,7 @@
       }
 
       if (!jugadores || jugadores.length === 0) return;
+      window._jugadores = jugadores;
 
       // KPIs
       const totalGoles = jugadores.reduce((s, j) => s + j.totalGoals, 0);
