@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Crear club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Nuevo club</div>
+      <div style="width:80px;"></div>
+      
+    </header>
+
+    <!-- HERO -->
+    <div class="user-welcome glass" id="club-hero">
+      <div class="user-avatar" id="club-avatar" style="font-size:28px;">🏟️</div>
+      <div>
+        <div class="user-name" id="hero-name">Sin nombre</div>
+        <div class="user-greeting">Completa los datos del club</div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="glass full-panel">
+      <div class="ptitle">Datos del club</div>
+
+      <form id="club-form">
+        <div class="profile-grid">
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;">
+            <div class="profile-lbl">Nombre del club *</div>
+            <input class="input" type="text" name="nombre" placeholder="Ej: FC Barcelona" required />
+          </div>
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;">
+            <div class="profile-lbl">Ciudad</div>
+            <input class="input" type="text" name="ciudad" placeholder="Ej: Madrid" />
+          </div>
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;">
+            <div class="profile-lbl">País</div>
+            <input class="input" type="text" name="pais" placeholder="Ej: España" />
+          </div>
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;">
+            <div class="profile-lbl">Año de fundación</div>
+            <input class="input" type="number" name="anioFundacion" placeholder="Ej: 1902" min="1800" max="2099" />
+          </div>
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;grid-column:1/-1;">
+            <div class="profile-lbl">Descripción</div>
+            <textarea class="input" name="descripcion" placeholder="Breve descripción del club..." rows="3" style="resize:vertical;"></textarea>
+          </div>
+
+          <div class="profile-field" style="display:flex;flex-direction:column;gap:5px;">
+            <div class="profile-lbl">Escudo del club</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div id="escudo-preview" style="
+                width:52px;height:52px;border-radius:50%;
+                background:var(--glass);border:0.5px solid var(--glass-brd);
+                display:flex;align-items:center;justify-content:center;
+                font-size:22px;flex-shrink:0;overflow:hidden;">🏟️</div>
+              <input type="file" id="escudo-input" name="escudo" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
+              <button type="button" class="btn" id="escudo-btn">Seleccionar imagen</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="form-error" style="font-size:12px;color:var(--re);min-height:18px;margin:12px 0;"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+          <button type="button" class="btn" id="cancel-btn">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Crear club</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/club.html';
+    });
+
+    document.getElementById('cancel-btn').addEventListener('click', () => {
+      window.location.href = '/club.html';
+    });
+
+    // Preview nombre en el hero
+    document.querySelector('input[name="nombre"]').addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      document.getElementById('hero-name').textContent = val || 'Sin nombre';
+    });
+
+    // Preview escudo
+    const escudoInput = document.getElementById('escudo-input');
+    document.getElementById('escudo-btn').addEventListener('click', () => escudoInput.click());
+    escudoInput.addEventListener('change', () => {
+      const file = escudoInput.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      document.getElementById('escudo-preview').innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" />`;
+      document.getElementById('club-avatar').innerHTML    = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;" />`;
+    });
+
+    // Submit
+    document.getElementById('club-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn   = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const form = e.target;
+      const data = new FormData();
+      data.append('nombre', form.nombre.value.trim());
+      if (form.ciudad.value.trim())        data.append('ciudad', form.ciudad.value.trim());
+      if (form.pais.value.trim())          data.append('pais', form.pais.value.trim());
+      if (form.anioFundacion.value)        data.append('anioFundacion', form.anioFundacion.value);
+      if (form.descripcion.value.trim())   data.append('descripcion', form.descripcion.value.trim());
+      if (escudoInput.files[0])            data.append('escudo', escudoInput.files[0]);
+
+      try {
+        const res = await fetch('/api/clubes', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') },
+          body: data
+        });
+        if (!res.ok) throw new Error('Error al crear el club');
+        window.location.href = '/club.html';
+      } catch (err) {
+        errEl.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Crear club';
+      }
+    });
+  </script>
+
+</body>
+</html>
