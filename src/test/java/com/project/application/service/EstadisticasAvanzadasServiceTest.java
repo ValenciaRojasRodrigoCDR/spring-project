@@ -37,10 +37,10 @@ class EstadisticasAvanzadasServiceTest {
 
         Result r = service.get(1L);
 
-        assertThat(r.promedioEdad()).isEqualTo(0);
-        assertThat(r.promedioGoles()).isEqualTo(0);
-        assertThat(r.promedioPartidos()).isEqualTo(0);
-        assertThat(r.jugadoresSinGoles()).isEqualTo(0);
+        assertThat(r.promedioEdad()).isZero();
+        assertThat(r.promedioGoles()).isZero();
+        assertThat(r.promedioPartidos()).isZero();
+        assertThat(r.jugadoresSinGoles()).isZero();
         assertThat(r.porPosicion()).isEmpty();
         assertThat(r.masEficiente().nombre()).isEqualTo("—");
         assertThat(r.masPartidosSinMarcar().nombre()).isEqualTo("—");
@@ -108,7 +108,7 @@ class EstadisticasAvanzadasServiceTest {
 
         Result r = service.get(1L);
 
-        assertThat(r.promedioEdad()).isEqualTo(0);
+        assertThat(r.promedioEdad()).isZero();
         assertThat(r.masJoven().nombre()).isEqualTo("—");
         assertThat(r.masVeterano().nombre()).isEqualTo("—");
         assertThat(r.dorsalMasBajo().nombre()).isEqualTo("—");
@@ -145,8 +145,8 @@ class EstadisticasAvanzadasServiceTest {
 
         Result r = service.get(1L);
 
-        assertThat(r.porPosicion()).allSatisfy(p ->
-                assertThat(p.porcentajeGoles()).isEqualTo(0));
+        assertThat(r.porPosicion()).isNotEmpty().allSatisfy(p ->
+                assertThat(p.porcentajeGoles()).isZero());
     }
 
     // ── null and blank posicion → filtered out of porPosicion ────────────────
@@ -182,6 +182,6 @@ class EstadisticasAvanzadasServiceTest {
         assertThat(r.masEficiente().nombre()).isEqualTo("Solo");
         assertThat(r.jugadoresSinGoles()).isEqualTo(1);
         assertThat(r.porPosicion()).hasSize(1);
-        assertThat(r.porPosicion().get(0).porcentajeGoles()).isEqualTo(0);
+        assertThat(r.porPosicion().get(0).porcentajeGoles()).isZero();
     }
 }
