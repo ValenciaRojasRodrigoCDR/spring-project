@@ -9,6 +9,24 @@
 const BASE_URL = '/api';
 
 /* ============================================================
+   AUTH — valida el JWT contra el servidor en cada carga
+   Si el token no existe o el servidor lo rechaza → login
+   ============================================================ */
+(function () {
+  const token = localStorage.getItem('jwt_token');
+  if (!token) { window.location.replace('/login.html'); return; }
+  fetch(BASE_URL + '/users/me', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(function (r) {
+    if (r.status === 401 || r.status === 403) {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('username');
+      window.location.replace('/login.html');
+    }
+  }).catch(function () { /* servidor caído — la página lo gestionará */ });
+}());
+
+/* ============================================================
    CHART.JS THEME — colores hardcoded (canvas no lee CSS vars)
    ============================================================ */
 const CHART_THEME = {
@@ -196,7 +214,7 @@ async function apiUpload(path, file) {
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       body: form,
     });
-    if (res.status === 401) { window.location.replace('/login.html'); return null; }
+    if (res.status === 401) { localStorage.removeItem('jwt_token'); window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -216,7 +234,7 @@ async function apiFetch(path, options = {}) {
       },
       ...options,
     });
-    if (res.status === 401) { window.location.replace('/login.html'); return null; }
+    if (res.status === 401) { localStorage.removeItem('jwt_token'); window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {
