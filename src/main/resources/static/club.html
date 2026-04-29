@@ -37,6 +37,13 @@
       window.location.href = '/index.html';
     });
 
+    // TODO: RENDIMIENTO EN CHROME
+    // La carga de esta pantalla penaliza en Chrome cuando hay muchos equipos con imagen.
+    // Mejoras pendientes:
+    //   - Lazy-load de escudos con IntersectionObserver (solo cargar imagen al entrar en viewport)
+    //   - Skeleton screens mientras llega la respuesta de /api/equipos
+    //   - Paginar o virtualizar la lista si supera N equipos
+    //   - Revisar reflows de CSS: los cálculos de glassmorphism (backdrop-filter) son costosos en Chrome
     document.addEventListener('DOMContentLoaded', async () => {
       const equipos = await apiFetch('/equipos');
       const content = document.getElementById('content');
