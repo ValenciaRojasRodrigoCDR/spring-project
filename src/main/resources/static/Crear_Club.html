@@ -133,28 +133,25 @@
       btn.textContent = 'Guardando...';
 
       const form = e.target;
-      const data = new FormData();
-      data.append('nombre', form.nombre.value.trim());
-      if (form.ciudad.value.trim())        data.append('ciudad', form.ciudad.value.trim());
-      if (form.pais.value.trim())          data.append('pais', form.pais.value.trim());
-      if (form.anioFundacion.value)        data.append('anioFundacion', form.anioFundacion.value);
-      if (form.descripcion.value.trim())   data.append('descripcion', form.descripcion.value.trim());
-      if (escudoInput.files[0])            data.append('escudo', escudoInput.files[0]);
 
-      try {
-        const res = await fetch('/api/clubes', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') },
-          body: data
-        });
-        if (!res.ok) throw new Error('Error al crear el club');
-        window.location.href = '/club.html';
-      } catch (err) {
-        errEl.textContent = err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Crear club';
+      const result = await apiFetch('/equipos', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre:      form.nombre.value.trim(),
+          temporada:   null,
+          liga:        null,
+          descripcion: form.descripcion.value.trim() || null,
+        })
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Crear club';
+
+      if (!result?.id) {
+        errEl.textContent = 'Error al crear el club. Inténtalo de nuevo.';
+        return;
       }
+      window.location.href = '/club.html';
     });
   </script>
 
