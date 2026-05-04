@@ -1,5 +1,5 @@
 CREATE SEQUENCE IF NOT EXISTS equipos_seq   START WITH 1 INCREMENT BY 50;
-CREATE SEQUENCE IF NOT EXISTS jugadores_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE IF NOT EXISTS jugadores_seq START WITH 1 INCREMENT BY 50;
 
 CREATE TABLE IF NOT EXISTS users (
     id          BIGINT       AUTO_INCREMENT PRIMARY KEY,
@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS jugadores (
     equipo_id         BIGINT         NOT NULL,
     CONSTRAINT fk_jugador_equipo FOREIGN KEY (equipo_id) REFERENCES equipos(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_equipos_user_id     ON equipos(user_id);
+CREATE INDEX IF NOT EXISTS idx_jugadores_equipo_id ON jugadores(equipo_id);
 
 -- TODO: LIGAS
 --

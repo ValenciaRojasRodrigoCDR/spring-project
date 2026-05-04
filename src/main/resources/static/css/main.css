@@ -73,9 +73,10 @@ body {
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(30px);
   opacity: 0.35;
   animation: drift 10s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .orb1 {
@@ -198,8 +199,8 @@ body {
   background: var(--glass);
   border: 0.5px solid var(--glass-brd);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: background 0.2s, border-color 0.2s;
 }
 
@@ -754,6 +755,26 @@ body {
 .btn-google:hover {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ===== SCROLLABLE TABLE WRAPPER ===== */
+.tbl-scroll {
+  max-height: 300px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+}
+
+.tbl-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+.tbl-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 4px; }
+.tbl-scroll::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.35); border-radius: 4px; }
+.tbl-scroll::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.55); }
+
+.tbl-scroll .tbl thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(13,11,30,0.92);
+  backdrop-filter: blur(8px);
+  z-index: 1;
 }
 
 /* ===== RESPONSIVE ===== */

@@ -142,6 +142,89 @@ function createLineChart(canvasId, labels, datasets) {
 }
 
 /* ============================================================
+   CHART — donut / doughnut
+   ============================================================ */
+function createDoughnutChart(canvasId, labels, data, colors) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+  const palette = colors || [
+    'rgba(167,139,250,0.80)', 'rgba(96,165,250,0.80)',
+    'rgba(244,114,182,0.80)', 'rgba(52,211,153,0.80)',
+    'rgba(251,191,36,0.80)',  'rgba(248,113,113,0.80)',
+    'rgba(249,115,22,0.80)',  'rgba(148,163,184,0.60)',
+  ];
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: palette.slice(0, data.length), borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: CHART_THEME.ticks, font: { size: 11, family: 'Outfit' }, padding: 12, boxWidth: 12 } },
+        tooltip: {
+          backgroundColor: CHART_THEME.tooltipBg,
+          borderColor: CHART_THEME.tooltipBrd,
+          borderWidth: 0.5,
+          titleColor: CHART_THEME.tooltipTxt,
+          bodyColor: CHART_THEME.tooltipVal,
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   CHART — barra horizontal
+   ============================================================ */
+function createHorizontalBarChart(canvasId, labels, data, colorFn) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colorFn ? data.map((_, i) => colorFn(i)) : CHART_THEME.purple,
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: CHART_THEME.tooltipBg,
+          borderColor: CHART_THEME.tooltipBrd,
+          borderWidth: 0.5,
+          titleColor: CHART_THEME.tooltipTxt,
+          bodyColor: CHART_THEME.tooltipVal,
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: CHART_THEME.ticks, font: { size: 10, family: 'Outfit' } },
+          grid: { color: CHART_THEME.grid },
+          border: { display: false }
+        },
+        y: {
+          ticks: { color: CHART_THEME.ticks, font: { size: 11, family: 'Outfit' } },
+          grid: { display: false },
+          border: { display: false }
+        }
+      }
+    }
+  });
+}
+
+/* ============================================================
    TABLE — renderiza filas con clases del tema
    ============================================================ */
 /**

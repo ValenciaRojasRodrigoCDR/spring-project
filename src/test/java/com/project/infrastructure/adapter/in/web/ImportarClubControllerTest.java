@@ -71,7 +71,7 @@ class ImportarClubControllerTest {
     @Test
     void estado_pending_devuelvePending() throws Exception {
         when(importJobStore.obtener("abc")).thenReturn(
-                Optional.of(new ImportJobStore.Job(ImportJobStore.Estado.PENDING, null, null)));
+                Optional.of(new ImportJobStore.Job(ImportJobStore.Estado.PENDING, null, null, java.time.Instant.now())));
 
         mockMvc.perform(get("/api/equipos/importar/abc"))
                 .andExpect(status().isOk())
