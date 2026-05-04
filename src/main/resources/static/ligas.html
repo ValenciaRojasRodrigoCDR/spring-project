@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Ligas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <style>
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .liga-list { display:flex; flex-direction:column; gap:12px; }
+    .liga-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 20px; border-radius:var(--radius-md);
+      background:var(--glass); border:1px solid var(--glass-brd);
+      cursor:pointer; transition:background .2s;
+    }
+    .liga-row:hover { background:var(--glass-hov); }
+    .liga-row-info { display:flex; flex-direction:column; gap:2px; }
+    .liga-row-name { font-weight:600; font-size:15px; }
+    .liga-row-meta { font-size:12px; color:var(--txt2); }
+    .liga-row-actions { display:flex; gap:8px; }
+    .btn-sm { font-size:11px; padding:4px 12px; }
+    .modal-backdrop {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
+      z-index:100; align-items:center; justify-content:center;
+    }
+    .modal-backdrop.open { display:flex; }
+    .modal {
+      background:#1a1040; border:1px solid var(--glass-brd);
+      border-radius:var(--radius-lg); padding:28px 32px;
+      width:min(420px, 90vw); display:flex; flex-direction:column; gap:16px;
+    }
+    .modal h3 { margin:0; font-size:17px; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:12px; color:var(--txt2); }
+    .form-group input, .form-group textarea {
+      background:var(--glass); border:1px solid var(--glass-brd);
+      border-radius:var(--radius-sm); color:var(--txt);
+      padding:8px 12px; font-family:inherit; font-size:13px; outline:none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color:#a78bfa; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; }
+    .empty-state { text-align:center; color:var(--txt2); padding:40px 0; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr">
+      <div class="logo" style="cursor:pointer;" id="back-btn">
+        <span style="font-size:20px;margin-right:6px;">←</span>
+        <div>
+          <div class="logo-txt">Ligas</div>
+          <div class="logo-sub">Gestión de competiciones</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <button class="btn" id="new-liga-btn">+ Nueva liga</button>
+        <button class="btn" id="logout-btn" style="font-size:11px;padding:4px 12px;">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="liga-list" id="liga-list">
+      <div class="empty-state">Cargando ligas...</div>
+    </div>
+
+  </div>
+
+  <!-- Modal crear / editar liga -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <h3 id="modal-title">Nueva liga</h3>
+      <div class="form-group">
+        <label>Nombre *</label>
+        <input type="text" id="f-nombre" placeholder="Nombre de la liga" />
+      </div>
+      <div class="form-group">
+        <label>Temporada</label>
+        <input type="text" id="f-temporada" placeholder="Ej. 2024-25" />
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="f-descripcion" rows="3" placeholder="Descripción opcional"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sm" id="modal-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
+        <button class="btn btn-sm" id="modal-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('username');
+      window.location.replace('/login.html');
+    });
+    document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/index.html');
+
+    let editingId = null;
+
+    async function loadLigas() {
+      const list = document.getElementById('liga-list');
+      const ligas = await apiFetch('/ligas');
+      if (!ligas || ligas.length === 0) {
+        list.innerHTML = '<div class="empty-state">No tienes ligas creadas.<br>Pulsa <strong>+ Nueva liga</strong> para empezar.</div>';
+        return;
+      }
+      list.innerHTML = ligas.map(l => `
+        <div class="liga-row" data-id="${l.id}">
+          <div class="liga-row-info">
+            <div class="liga-row-name">${l.nombre}</div>
+            <div class="liga-row-meta">${l.temporada || 'Sin temporada'} · ${l.equipoIds ? l.equipoIds.length : 0} equipo(s)</div>
+          </div>
+          <div class="liga-row-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-sm" onclick="openPartidos(${l.id}, '${l.nombre.replace(/'/g,"\\'")}')">Partidos</button>
+            <button class="btn btn-sm" onclick="openEdit(${l.id}, '${l.nombre.replace(/'/g,"\\'")}', '${(l.temporada||'').replace(/'/g,"\\'")}', '${(l.descripcion||'').replace(/'/g,"\\'")}')">Editar</button>
+            <button class="btn btn-sm" style="color:#f87171;" onclick="deleteLiga(${l.id})">Eliminar</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function openPartidos(ligaId, ligaNombre) {
+      localStorage.setItem('current_liga_id', ligaId);
+      localStorage.setItem('current_liga_nombre', ligaNombre);
+      window.location.href = '/partidos.html';
+    }
+
+    function openNew() {
+      editingId = null;
+      document.getElementById('modal-title').textContent = 'Nueva liga';
+      document.getElementById('f-nombre').value = '';
+      document.getElementById('f-temporada').value = '';
+      document.getElementById('f-descripcion').value = '';
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function openEdit(id, nombre, temporada, descripcion) {
+      editingId = id;
+      document.getElementById('modal-title').textContent = 'Editar liga';
+      document.getElementById('f-nombre').value = nombre;
+      document.getElementById('f-temporada').value = temporada;
+      document.getElementById('f-descripcion').value = descripcion;
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+    }
+
+    async function saveLiga() {
+      const nombre      = document.getElementById('f-nombre').value.trim();
+      const temporada   = document.getElementById('f-temporada').value.trim();
+      const descripcion = document.getElementById('f-descripcion').value.trim();
+      if (!nombre) { alert('El nombre es obligatorio'); return; }
+
+      const body = { nombre, temporada, descripcion };
+      if (editingId) {
+        await apiFetch(`/ligas/${editingId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      } else {
+        await apiFetch('/ligas', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      }
+      closeModal();
+      loadLigas();
+    }
+
+    async function deleteLiga(id) {
+      if (!confirm('¿Eliminar esta liga? Se borrarán todos sus partidos.')) return;
+      await apiFetch(`/ligas/${id}`, { method: 'DELETE' });
+      loadLigas();
+    }
+
+    document.getElementById('new-liga-btn').addEventListener('click', openNew);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-save').addEventListener('click', saveLiga);
+    document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+    loadLigas();
+  </script>
+
+</body>
+</html>

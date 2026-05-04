@@ -93,6 +93,13 @@
         <div class="club-card-arrow">→</div>
       </div>
 
+      <div class="glass club-card" id="btn-ligas">
+        <div class="club-card-ico">🏅</div>
+        <div class="club-card-title">Ligas</div>
+        <div class="club-card-sub" id="ligas-sub">Cargando...</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
       <div class="glass club-card" id="btn-perfil">
         <div class="club-card-ico">👤</div>
         <div class="club-card-title">Mi perfil</div>
@@ -144,9 +151,25 @@
     document.getElementById('btn-importar-club').addEventListener('click', () => {
       window.location.href = '/import-club.html';
     });
+    document.getElementById('btn-ligas').addEventListener('click', () => {
+      window.location.href = '/ligas.html';
+    });
     document.getElementById('btn-perfil').addEventListener('click', () => {
       window.location.href = '/profile.html';
     });
+
+    async function loadLigas() {
+      const data = await apiFetch('/ligas');
+      const sub  = document.getElementById('ligas-sub');
+      if (!data || data.length === 0) {
+        sub.textContent = 'No tienes ligas creadas';
+      } else {
+        sub.textContent = data.length === 1
+          ? `1 liga · ${data[0].nombre}`
+          : `${data.length} ligas`;
+      }
+    }
+    loadLigas();
   </script>
 
 </body>

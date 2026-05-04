@@ -1,7 +1,10 @@
 package com.project.infrastructure.adapter.in.web;
 
 import com.project.domain.exception.EquipoNotFoundException;
+import com.project.domain.exception.LigaNotFoundException;
+import com.project.domain.exception.PartidoNotFoundException;
 import com.project.domain.exception.UnauthorizedEquipoAccessException;
+import com.project.domain.exception.UnauthorizedLigaAccessException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +50,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UnauthorizedEquipoAccessException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorizedEquipoAccess(UnauthorizedEquipoAccessException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(LigaNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleLigaNotFound(LigaNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(PartidoNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePartidoNotFound(PartidoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedLigaAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleUnauthorizedLigaAccess(UnauthorizedLigaAccessException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
     }
 }
