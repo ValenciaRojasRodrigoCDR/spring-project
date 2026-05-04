@@ -16,4 +16,5 @@ public class User {
     String apellidos;
     String email;
     LocalDateTime createdAt;
+    Long jugadorId;
 }

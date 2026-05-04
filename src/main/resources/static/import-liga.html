@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Importar partidos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt" id="liga-title-hdr">Importar partidos</div>
+      <div style="width:80px;"></div>
+    </header>
+
+    <!-- INFO LIGA + EQUIPO -->
+    <div class="glass full-panel">
+      <div class="ptitle">Configuración de importación</div>
+      <div class="profile-grid">
+        <div class="profile-field">
+          <div class="profile-lbl">Liga</div>
+          <div class="profile-val" id="info-liga">—</div>
+        </div>
+        <div class="profile-field" style="border-bottom:none;">
+          <div class="profile-lbl">Equipo que juega estos partidos *</div>
+          <select id="sel-equipo" style="
+            background:transparent; border:none; outline:none;
+            color:var(--txt); font-size:14px; font-family:inherit; width:100%;
+            padding:0;">
+            <option value="">— Seleccionar equipo —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="glass full-panel">
+      <div class="ptitle">Fichero Excel</div>
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:12px;">
+        Usa el mismo formato que en "Importar club". Se importarán los partidos detectados (rival, fecha, resultado, goles).
+      </div>
+
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-zone-ico">📊</div>
+        <div class="drop-zone-lbl">Arrastra aquí tu fichero Excel</div>
+        <div class="drop-zone-hint">.xlsx · .xls</div>
+      </div>
+
+      <div class="file-list" id="file-list"></div>
+
+      <div class="upload-row">
+        <label class="btn" for="file-input">📂 Seleccionar fichero</label>
+        <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none" />
+        <button class="btn btn-primary" id="parse-btn">Procesar</button>
+      </div>
+      <span id="upload-error" style="display:block;font-size:12px;color:var(--re);min-height:18px;margin-top:8px;"></span>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="preview-section" style="display:none;">
+      <div class="kpi-strip">
+        <div class="kpi glass k1"><div class="kpi-lbl">Partidos</div><div class="kpi-val" id="kpi-partidos">—</div><div class="kpi-sub">detectados</div></div>
+        <div class="kpi glass k2"><div class="kpi-lbl">Goles</div><div class="kpi-val" id="kpi-goles">—</div><div class="kpi-sub">totales equipo</div></div>
+        <div class="kpi glass k3"><div class="kpi-lbl">Victorias</div><div class="kpi-val" id="kpi-wins">—</div><div class="kpi-sub">ganados</div></div>
+        <div class="kpi glass k4"><div class="kpi-lbl">Derrotas</div><div class="kpi-val" id="kpi-losses">—</div><div class="kpi-sub">perdidos</div></div>
+      </div>
+
+      <div class="glass full-panel">
+        <div class="ptitle">Vista previa de partidos</div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Jornada</th>
+              <th>Rival</th>
+              <th>Fecha</th>
+              <th class="tr">Resultado</th>
+              <th class="tr">GF</th>
+            </tr>
+          </thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+
+      <div class="glass full-panel">
+        <div class="ptitle">Importar a la liga</div>
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;">
+          Los partidos se crearán en la liga "<span id="confirm-liga">—</span>" para el equipo "<span id="confirm-equipo">—</span>".
+        </div>
+        <div class="upload-row">
+          <button class="btn btn-primary" id="import-btn">✅ Importar partidos</button>
+        </div>
+        <span id="import-error" style="display:block;font-size:12px;color:var(--re);min-height:18px;margin-top:8px;"></span>
+        <span id="import-ok" style="display:block;font-size:12px;color:var(--gr);min-height:18px;margin-top:4px;"></span>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const ligaId     = localStorage.getItem('current_liga_id');
+    const ligaNombre = localStorage.getItem('current_liga_nombre') || '—';
+    if (!ligaId) window.location.replace('/ligas.html');
+
+    document.getElementById('liga-title-hdr').textContent = `Importar · ${ligaNombre}`;
+    document.getElementById('info-liga').textContent = ligaNombre;
+    document.getElementById('confirm-liga').textContent = ligaNombre;
+    document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/partidos.html');
+
+    let parsedMatches = [];
+
+    /* ── Cargar equipos de la liga ─────────────────────────────── */
+    async function loadEquipos() {
+      const [equipoIds, todosEquipos] = await Promise.all([
+        apiFetch(`/ligas/${ligaId}/equipos`),
+        apiFetch('/equipos')
+      ]);
+      const ids = equipoIds || [];
+      const equipos = (todosEquipos || []).filter(e => ids.includes(e.id));
+      const sel = document.getElementById('sel-equipo');
+      if (equipos.length === 0) {
+        sel.innerHTML = '<option value="">— Sin equipos en esta liga —</option>';
+      } else {
+        sel.innerHTML = '<option value="">— Seleccionar —</option>' +
+          equipos.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+      }
+    }
+
+    document.getElementById('sel-equipo').addEventListener('change', () => {
+      const sel = document.getElementById('sel-equipo');
+      const txt = sel.options[sel.selectedIndex]?.text || '—';
+      document.getElementById('confirm-equipo').textContent = txt;
+    });
+
+    /* ── Drag & drop ───────────────────────────────────────────── */
+    let currentFile = null;
+    const dropZone  = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const errEl     = document.getElementById('upload-error');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { setFile(fileInput.files[0]); fileInput.value = ''; });
+
+    function setFile(file) {
+      if (!file || (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls'))) {
+        errEl.textContent = 'Solo se admiten ficheros .xlsx o .xls';
+        return;
+      }
+      errEl.textContent = '';
+      currentFile = file;
+      document.getElementById('file-list').innerHTML = `
+        <div class="file-row glass">
+          <span class="file-row-ico">📄</span>
+          <div class="file-row-info">
+            <div class="file-row-name">${file.name}</div>
+            <div class="file-row-size">${(file.size/1024).toFixed(1)} KB</div>
+          </div>
+          <button class="btn file-row-remove" id="remove-file">✕</button>
+        </div>`;
+      document.getElementById('remove-file').addEventListener('click', () => {
+        currentFile = null;
+        document.getElementById('file-list').innerHTML = '';
+        document.getElementById('preview-section').style.display = 'none';
+      });
+    }
+
+    /* ── Parsear Excel ─────────────────────────────────────────── */
+    document.getElementById('parse-btn').addEventListener('click', () => {
+      if (!currentFile) { errEl.textContent = 'Selecciona un fichero primero.'; return; }
+      const btn = document.getElementById('parse-btn');
+      btn.disabled = true; btn.textContent = 'Procesando…';
+      parseExcel(currentFile).then(matches => {
+        parsedMatches = matches;
+        renderPreview(matches);
+        btn.disabled = false; btn.textContent = 'Procesar';
+      }).catch(e => {
+        errEl.textContent = 'Error al procesar el fichero: ' + e.message;
+        btn.disabled = false; btn.textContent = 'Procesar';
+      });
+    });
+
+    function parseExcel(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const wb    = XLSX.read(new Uint8Array(ev.target.result), { type:'array', cellDates:true });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            function cl(r,c) { return sheet[XLSX.utils.encode_cell({r,c})]; }
+            function clStr(r,c) { const x=cl(r,c); if(!x) return null; if(x.t==='s') return x.v.trim()||null; if(x.t==='n') return String(Math.round(x.v)); return null; }
+            function clInt(r,c) { const x=cl(r,c); return (x&&x.t==='n') ? Math.round(x.v) : 0; }
+            function clDate(r,c) {
+              const x=cl(r,c); if(!x) return null;
+              if(x.t==='d') { const d=x.v; return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+              if(x.t==='s'&&/^\d{4}-\d{2}-\d{2}$/.test(x.v.trim())) return x.v.trim();
+              return null;
+            }
+
+            // Detectar columnas de jornada (J1, J2...) en fila 1
+            const jornadaCols=[], jornadaNames=[];
+            let totalsRow=-1, rivalsRow=-1, datesRow=-1, resultsRow=-1;
+
+            for (let c=0; c<=range.e.c; c++) {
+              const x=cl(1,c); if(!x) continue;
+              const v=String(x.t==='s'?x.v:x.v).trim();
+              if(/^J\d+$/.test(v)) { jornadaCols.push(c); jornadaNames.push(v); }
+            }
+
+            // Buscar filas de metadata de partidos
+            for (let r=2; r<=range.e.r; r++) {
+              const label=clStr(r,0);
+              if(label) {
+                if(/^TOTAL$/i.test(label) && totalsRow<0)   totalsRow=r;
+                if(/^RIVAL(ES)?$/i.test(label) && rivalsRow<0) rivalsRow=r;
+                if(/^FECHA(S)?$/i.test(label) && datesRow<0)  datesRow=r;
+                if(/^RESULTADO/i.test(label) && resultsRow<0) resultsRow=r;
+              } else {
+                const isDateRow=jornadaCols.some(c=>{const x=cl(r,c);return x&&(x.t==='d'||(x.t==='s'&&/^\d{4}-\d{2}-\d{2}$/.test(x.v.trim())));});
+                const isStrRow=jornadaCols.some(c=>{const x=cl(r,c);return x&&x.t==='s'&&x.v.trim();});
+                if(isDateRow&&datesRow<0) datesRow=r;
+                else if(isStrRow&&rivalsRow<0) rivalsRow=r;
+              }
+            }
+
+            // Construir partidos desde columnas de jornada
+            const matches=[];
+            jornadaCols.forEach((col,i)=>{
+              const rival  = rivalsRow>=0  ? clStr(rivalsRow,col)  : null;
+              const fecha  = datesRow>=0   ? clDate(datesRow,col)  : null;
+              const result = resultsRow>=0 ? clStr(resultsRow,col) : null;
+              const goals  = totalsRow>=0  ? clInt(totalsRow,col)  : 0;
+              if(rival||fecha||result) {
+                // Intentar parsear goles del resultado "2-1"
+                let gf=goals, gc=0;
+                if(result&&/^\d+-\d+$/.test(result)) {
+                  const parts=result.split('-');
+                  gf=parseInt(parts[0],10); gc=parseInt(parts[1],10);
+                }
+                matches.push({ jornada:jornadaNames[i], rival, fecha, resultado:result, golesFavor:gf, golesContra:gc });
+              }
+            });
+            resolve(matches);
+          } catch(err) { reject(err); }
+        };
+        reader.onerror=()=>reject(new Error('No se pudo leer el fichero'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function renderPreview(matches) {
+      const goles = matches.reduce((s,m)=>s+m.golesFavor,0);
+      const wins  = matches.filter(m=>m.golesFavor>m.golesContra).length;
+      const losses= matches.filter(m=>m.golesFavor<m.golesContra).length;
+      document.getElementById('kpi-partidos').textContent = matches.length;
+      document.getElementById('kpi-goles').textContent    = goles;
+      document.getElementById('kpi-wins').textContent     = wins;
+      document.getElementById('kpi-losses').textContent   = losses;
+
+      const tbody = document.getElementById('preview-body');
+      tbody.innerHTML = '';
+      matches.forEach(m => {
+        const tr = document.createElement('tr');
+        const cls = m.golesFavor>m.golesContra?'badge-w':m.golesFavor===m.golesContra?'badge-d':'badge-l';
+        tr.innerHTML = `
+          <td><span class="status-badge status-info">${m.jornada||'—'}</span></td>
+          <td>${m.rival||'—'}</td>
+          <td>${m.fecha?new Date(m.fecha+'T00:00:00').toLocaleDateString('es-ES'):'—'}</td>
+          <td class="tr"><span class="${cls}">${m.resultado||`${m.golesFavor}-${m.golesContra}`}</span></td>
+          <td class="tr pts-cell">${m.golesFavor}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('preview-section').style.display = 'block';
+      document.getElementById('preview-section').scrollIntoView({ behavior:'smooth' });
+    }
+
+    /* ── Importar ──────────────────────────────────────────────── */
+    document.getElementById('import-btn').addEventListener('click', async () => {
+      const equipoId = document.getElementById('sel-equipo').value;
+      const impErr   = document.getElementById('import-error');
+      const impOk    = document.getElementById('import-ok');
+      impErr.textContent = ''; impOk.textContent = '';
+
+      if (!equipoId) { impErr.textContent = 'Selecciona un equipo.'; return; }
+      if (!parsedMatches.length) { impErr.textContent = 'No hay partidos para importar.'; return; }
+
+      const btn = document.getElementById('import-btn');
+      btn.disabled = true; btn.textContent = 'Importando…';
+
+      let ok = 0, ko = 0;
+      for (const m of parsedMatches) {
+        const res = await apiFetch(`/ligas/${ligaId}/partidos`, {
+          method: 'POST',
+          body: JSON.stringify({
+            equipoId: Number(equipoId),
+            rival:        m.rival || 'Desconocido',
+            fecha:        m.fecha || null,
+            lugar:        null,
+            resultado:    m.resultado || `${m.golesFavor}-${m.golesContra}`,
+            golesFavor:   m.golesFavor,
+            golesContra:  m.golesContra
+          })
+        });
+        if (res !== null) ok++; else ko++;
+      }
+
+      btn.disabled = false; btn.textContent = '✅ Importar partidos';
+      if (ko === 0) {
+        impOk.textContent = `✓ ${ok} partido(s) importados correctamente.`;
+        setTimeout(() => window.location.href = '/partidos.html', 1500);
+      } else {
+        impErr.textContent = `${ok} importados, ${ko} con error.`;
+      }
+    });
+
+    loadEquipos();
+  </script>
+
+</body>
+</html>

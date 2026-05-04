@@ -24,13 +24,19 @@ public class JwtUtil {
     }
 
     public String generateToken(String username, String role) {
-        return Jwts.builder()
+        return generateToken(username, role, null);
+    }
+
+    public String generateToken(String username, String role, Long jugadorId) {
+        var builder = Jwts.builder()
                 .subject(username)
                 .claim("role", role)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(key)
-                .compact();
+                .expiration(new Date(System.currentTimeMillis() + expirationMs));
+        if (jugadorId != null) {
+            builder.claim("jugadorId", jugadorId);
+        }
+        return builder.signWith(key).compact();
     }
 
     public String extractUsername(String token) {
@@ -41,6 +47,12 @@ public class JwtUtil {
     public String extractRole(String token) {
         return Jwts.parser().verifyWith(key).build()
                 .parseSignedClaims(token).getPayload().get("role", String.class);
+    }
+
+    public Long extractJugadorId(String token) {
+        Number val = Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token).getPayload().get("jugadorId", Number.class);
+        return val != null ? val.longValue() : null;
     }
 
     public boolean isValid(String token) {

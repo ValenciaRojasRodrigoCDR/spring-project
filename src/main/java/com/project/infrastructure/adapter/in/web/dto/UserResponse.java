@@ -9,5 +9,6 @@ public record UserResponse(
         String nombre,
         String apellidos,
         String email,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Long jugadorId
 ) {}

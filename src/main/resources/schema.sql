@@ -5,11 +5,12 @@ CREATE TABLE IF NOT EXISTS users (
     id          BIGINT       AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE,
     password    VARCHAR(255) NOT NULL,
-    role        VARCHAR(20),
+    role        VARCHAR(30),
     nombre      VARCHAR(100),
     apellidos   VARCHAR(150),
     email       VARCHAR(150) UNIQUE,
-    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    jugador_id  BIGINT       NULL
 );
 
 CREATE TABLE IF NOT EXISTS equipos (

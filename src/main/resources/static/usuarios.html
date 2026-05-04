@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Usuarios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <style>
+    .modal-backdrop {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
+      z-index:100; align-items:center; justify-content:center;
+    }
+    .modal-backdrop.open { display:flex; }
+    .modal {
+      background:#1a1040; border:1px solid var(--glass-brd);
+      border-radius:var(--radius-lg); padding:28px 32px;
+      width:min(460px, 92vw); display:flex; flex-direction:column; gap:14px;
+    }
+    .modal h3 { margin:0; font-size:17px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-group label { font-size:12px; color:var(--txt2); }
+    .form-group input, .form-group select {
+      background:var(--glass); border:1px solid var(--glass-brd);
+      border-radius:var(--radius-sm); color:var(--txt);
+      padding:8px 12px; font-family:inherit; font-size:13px; outline:none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:#a78bfa; }
+    .form-group select option { background:#1a1040; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; }
+    .btn-sm { font-size:11px; padding:4px 12px; }
+    .role-chip {
+      display:inline-block; padding:2px 8px; border-radius:12px;
+      font-size:10px; font-weight:600; letter-spacing:.4px;
+    }
+    .role-ADMIN        { background:rgba(167,139,250,.2); color:#a78bfa; }
+    .role-LIGA_OWNER   { background:rgba(251,191,36,.15); color:#fbbf24; }
+    .role-EQUIPO_OWNER { background:rgba(96,165,250,.15); color:#60a5fa; }
+    .role-JUGADOR      { background:rgba(52,211,153,.15); color:#34d399; }
+    .empty-state { text-align:center; color:var(--txt2); padding:32px 0; font-size:14px; }
+    .form-hint { font-size:11px; color:var(--txt2); }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Gestión de usuarios</div>
+      <button class="btn btn-primary" id="new-user-btn">+ Nuevo usuario</button>
+    </header>
+
+    <div class="glass full-panel">
+      <div class="ptitle">Usuarios del sistema</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th class="tr">Jugador ID</th>
+            <th class="tr"></th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Modal crear usuario -->
+  <div class="modal-backdrop" id="modal-user">
+    <div class="modal">
+      <h3 id="modal-title">Nuevo usuario</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Usuario *</label>
+          <input type="text" id="f-username" placeholder="nombre_usuario" />
+        </div>
+        <div class="form-group">
+          <label>Contraseña *</label>
+          <input type="password" id="f-password" placeholder="••••••••" />
+        </div>
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" id="f-nombre" placeholder="Nombre" />
+        </div>
+        <div class="form-group">
+          <label>Apellidos</label>
+          <input type="text" id="f-apellidos" placeholder="Apellidos" />
+        </div>
+        <div class="form-group full">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="correo@ejemplo.com" />
+        </div>
+        <div class="form-group full">
+          <label>Rol *</label>
+          <select id="f-role">
+            <option value="ADMIN">⚙️ ADMIN — acceso total</option>
+            <option value="LIGA_OWNER">🏅 LIGA_OWNER — gestión de ligas</option>
+            <option value="EQUIPO_OWNER" selected>🏆 EQUIPO_OWNER — gestión de equipos</option>
+            <option value="JUGADOR">⚽ JUGADOR — solo visualización + perfil propio</option>
+          </select>
+        </div>
+        <div class="form-group full" id="jugador-id-group">
+          <label>ID del jugador vinculado</label>
+          <input type="number" id="f-jugador-id" placeholder="Solo para rol JUGADOR" />
+          <span class="form-hint">Vincula este usuario a un jugador para que pueda editar su perfil.</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sm" id="modal-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
+        <button class="btn btn-sm btn-primary" id="modal-save">Crear usuario</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal editar rol -->
+  <div class="modal-backdrop" id="modal-role">
+    <div class="modal">
+      <h3>Cambiar rol</h3>
+      <div class="form-group">
+        <label>Nuevo rol</label>
+        <select id="fr-role">
+          <option value="ADMIN">⚙️ ADMIN</option>
+          <option value="LIGA_OWNER">🏅 LIGA_OWNER</option>
+          <option value="EQUIPO_OWNER">🏆 EQUIPO_OWNER</option>
+          <option value="JUGADOR">⚽ JUGADOR</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ID jugador vinculado (solo JUGADOR)</label>
+        <input type="number" id="fr-jugador-id" placeholder="Dejar vacío si no aplica" />
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sm" id="role-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
+        <button class="btn btn-sm btn-primary" id="role-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+    if (!isAdmin()) { alert('Acceso denegado'); window.location.replace('/index.html'); }
+
+    document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/index.html');
+
+    let editingUserId = null;
+
+    async function loadUsers() {
+      const tbody = document.getElementById('users-body');
+      const users = await apiFetch('/users');
+      if (!users || !users.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin usuarios.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td><strong>${u.username}</strong></td>
+          <td>${u.nombre || '—'} ${u.apellidos || ''}</td>
+          <td style="color:var(--txt2);font-size:12px;">${u.email || '—'}</td>
+          <td><span class="role-chip role-${u.role}">${u.role}</span></td>
+          <td class="tr" style="color:var(--txt2);font-size:12px;">${u.jugadorId || '—'}</td>
+          <td class="tr">
+            <button class="btn btn-sm" onclick="openEditRole(${u.id},'${u.role}',${u.jugadorId||'null'})">Rol</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    // ── Crear usuario ─────────────────────────────────────────────
+    document.getElementById('f-role').addEventListener('change', () => {
+      document.getElementById('jugador-id-group').style.display =
+        document.getElementById('f-role').value === 'JUGADOR' ? 'flex' : 'none';
+    });
+    document.getElementById('jugador-id-group').style.display = 'none';
+
+    document.getElementById('new-user-btn').addEventListener('click', () => {
+      document.getElementById('f-username').value   = '';
+      document.getElementById('f-password').value   = '';
+      document.getElementById('f-nombre').value     = '';
+      document.getElementById('f-apellidos').value  = '';
+      document.getElementById('f-email').value      = '';
+      document.getElementById('f-role').value       = 'EQUIPO_OWNER';
+      document.getElementById('f-jugador-id').value = '';
+      document.getElementById('jugador-id-group').style.display = 'none';
+      document.getElementById('modal-user').classList.add('open');
+    });
+
+    document.getElementById('modal-cancel').addEventListener('click', () =>
+      document.getElementById('modal-user').classList.remove('open'));
+
+    document.getElementById('modal-save').addEventListener('click', async () => {
+      const role      = document.getElementById('f-role').value;
+      const jugadorId = document.getElementById('f-jugador-id').value;
+      const body = {
+        username:   document.getElementById('f-username').value.trim(),
+        password:   document.getElementById('f-password').value,
+        role,
+        nombre:     document.getElementById('f-nombre').value.trim() || null,
+        apellidos:  document.getElementById('f-apellidos').value.trim() || null,
+        email:      document.getElementById('f-email').value.trim() || null,
+        jugadorId:  jugadorId ? Number(jugadorId) : null
+      };
+      if (!body.username || !body.password) { alert('Usuario y contraseña obligatorios'); return; }
+      await apiFetch('/users/create', { method: 'POST', body: JSON.stringify(body) });
+      document.getElementById('modal-user').classList.remove('open');
+      loadUsers();
+    });
+
+    // ── Editar rol ────────────────────────────────────────────────
+    function openEditRole(id, currentRole, currentJugadorId) {
+      editingUserId = id;
+      document.getElementById('fr-role').value       = currentRole;
+      document.getElementById('fr-jugador-id').value = currentJugadorId !== null ? currentJugadorId : '';
+      document.getElementById('modal-role').classList.add('open');
+    }
+
+    document.getElementById('role-cancel').addEventListener('click', () =>
+      document.getElementById('modal-role').classList.remove('open'));
+
+    document.getElementById('role-save').addEventListener('click', async () => {
+      const jugadorId = document.getElementById('fr-jugador-id').value;
+      await apiFetch(`/users/${editingUserId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          role:      document.getElementById('fr-role').value,
+          jugadorId: jugadorId ? Number(jugadorId) : null
+        })
+      });
+      document.getElementById('modal-role').classList.remove('open');
+      loadUsers();
+    });
+
+    document.getElementById('modal-user').addEventListener('click', e => {
+      if (e.target === e.currentTarget) document.getElementById('modal-user').classList.remove('open');
+    });
+    document.getElementById('modal-role').addEventListener('click', e => {
+      if (e.target === e.currentTarget) document.getElementById('modal-role').classList.remove('open');
+    });
+
+    loadUsers();
+  </script>
+
+</body>
+</html>

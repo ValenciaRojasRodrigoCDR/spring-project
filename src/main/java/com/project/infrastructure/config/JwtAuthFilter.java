@@ -29,10 +29,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
             if (jwtUtil.isValid(token)) {
-                String username = jwtUtil.extractUsername(token);
-                String role = jwtUtil.extractRole(token);
+                String username  = jwtUtil.extractUsername(token);
+                String role      = jwtUtil.extractRole(token);
+                Long   jugadorId = jwtUtil.extractJugadorId(token);
+
                 var authority = new SimpleGrantedAuthority("ROLE_" + role);
                 var auth = new UsernamePasswordAuthenticationToken(username, null, List.of(authority));
+                // jugadorId stored in details for JUGADOR self-edit checks
+                auth.setDetails(jugadorId);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

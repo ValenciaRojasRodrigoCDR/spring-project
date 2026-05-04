@@ -107,9 +107,10 @@
           return;
         }
 
-        const { token } = await res.json();
+        const { token, role } = await res.json();
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('username', username);
+        localStorage.setItem('user_role', role || '');
         window.location.href = '/index.html';
       } catch {
         error.textContent = 'Error de conexión. Inténtalo de nuevo.';

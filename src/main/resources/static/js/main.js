@@ -21,10 +21,42 @@ const BASE_URL = '/api';
     if (r.status === 401 || r.status === 403) {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('username');
+      localStorage.removeItem('user_role');
       window.location.replace('/login.html');
     }
   }).catch(function () { /* servidor caído — la página lo gestionará */ });
 }());
+
+/* ============================================================
+   ROLES — utilidades de control de acceso en el frontend
+   Roles: ADMIN | LIGA_OWNER | EQUIPO_OWNER | JUGADOR
+   ============================================================ */
+function getRole()           { return localStorage.getItem('user_role') || ''; }
+function isAdmin()           { return getRole() === 'ADMIN'; }
+function isLigaOwner()       { return getRole() === 'LIGA_OWNER'; }
+function isEquipoOwner()     { return getRole() === 'EQUIPO_OWNER'; }
+function isJugadorRole()     { return getRole() === 'JUGADOR'; }
+function canEditLigas()      { return isAdmin() || isLigaOwner(); }
+function canEditEquipos()    { return isAdmin() || isEquipoOwner(); }
+function canEditJugadores()  { return isAdmin() || isEquipoOwner(); }
+
+function applyRoleVisibility() {
+  document.querySelectorAll('[data-role]').forEach(el => {
+    const allowed = el.dataset.role.split(',').map(r => r.trim());
+    el.style.display = allowed.includes(getRole()) || allowed.includes('ALL') ? '' : 'none';
+  });
+  document.querySelectorAll('[data-role-hide]').forEach(el => {
+    const hidden = el.dataset.roleHide.split(',').map(r => r.trim());
+    if (hidden.includes(getRole())) el.style.display = 'none';
+  });
+}
+
+function clearSession() {
+  localStorage.removeItem('jwt_token');
+  localStorage.removeItem('username');
+  localStorage.removeItem('user_role');
+  window.location.replace('/login.html');
+}
 
 /* ============================================================
    CHART.JS THEME — colores hardcoded (canvas no lee CSS vars)
@@ -226,16 +258,19 @@ async function apiUpload(path, file) {
 
 async function apiFetch(path, options = {}) {
   const token = localStorage.getItem('jwt_token');
+  const { headers: extraHeaders = {}, ...restOptions } = options;
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...extraHeaders,
       },
-      ...options,
+      ...restOptions,
     });
     if (res.status === 401) { localStorage.removeItem('jwt_token'); window.location.replace('/login.html'); return null; }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (res.status === 204) return null;
     return await res.json();
   } catch (err) {
     console.error('[API Error]', path, err);

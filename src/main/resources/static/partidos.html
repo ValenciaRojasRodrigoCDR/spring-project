@@ -3,27 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App · Partidos</title>
+  <title>App · Liga</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <style>
-    .partido-list { display:flex; flex-direction:column; gap:12px; }
-    .partido-card {
-      background:var(--glass); border:1px solid var(--glass-brd);
-      border-radius:var(--radius-md); padding:16px 20px;
-      display:flex; flex-direction:column; gap:8px;
+    /* ── Tabla scrollable ─────────────────────────────────────── */
+    .tbl-scroll-wrap {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 10px;
     }
-    .partido-header { display:flex; align-items:center; justify-content:space-between; }
-    .partido-rival { font-size:16px; font-weight:700; }
-    .partido-result {
-      font-size:22px; font-weight:900; letter-spacing:2px;
-      color:#a78bfa;
+    .tbl-scroll-wrap::-webkit-scrollbar { width: 4px; }
+    .tbl-scroll-wrap::-webkit-scrollbar-track { background: transparent; }
+    .tbl-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
+    .tbl-scroll-wrap .tbl thead th {
+      position: sticky; top: 0; z-index: 1;
+      background: #12103a;
     }
-    .partido-meta { font-size:12px; color:var(--txt2); display:flex; gap:16px; flex-wrap:wrap; }
-    .partido-actions { display:flex; gap:8px; justify-content:flex-end; }
-    .btn-sm { font-size:11px; padding:4px 12px; }
+    /* ── Panel header ─────────────────────────────────────────── */
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    /* ── Modales ──────────────────────────────────────────────── */
     .modal-backdrop {
       display:none; position:fixed; inset:0;
       background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
@@ -58,15 +62,12 @@
       font-family:inherit; font-size:12px; text-align:center;
     }
     .asistencia-table input[type=checkbox] { accent-color:#a78bfa; width:15px; height:15px; cursor:pointer; }
-    .empty-state { text-align:center; color:var(--txt2); padding:40px 0; font-size:14px; }
-    .stats-bar {
-      display:flex; gap:24px; flex-wrap:wrap;
-      background:var(--glass); border:1px solid var(--glass-brd);
-      border-radius:var(--radius-md); padding:14px 20px; margin-bottom:16px;
-    }
-    .stat-item { display:flex; flex-direction:column; gap:2px; }
-    .stat-label { font-size:11px; color:var(--txt2); }
-    .stat-val { font-size:18px; font-weight:700; }
+    .empty-state { text-align:center; color:var(--txt2); padding:32px 0; font-size:14px; }
+    .btn-sm { font-size:11px; padding:4px 10px; }
+    /* ── Badge resultado ──────────────────────────────────────── */
+    .badge-w { color:#34d399; font-weight:700; }
+    .badge-d { color:#fbbf24; font-weight:700; }
+    .badge-l { color:#f87171; font-weight:700; }
   </style>
 </head>
 <body>
@@ -79,31 +80,74 @@
 
   <div class="app">
 
-    <header class="hdr">
-      <div class="logo" style="cursor:pointer;" id="back-btn">
-        <span style="font-size:20px;margin-right:6px;">←</span>
-        <div>
-          <div class="logo-txt" id="liga-title">Partidos</div>
-          <div class="logo-sub">Historial de partidos</div>
-        </div>
-      </div>
-      <div class="hdr-right">
-        <button class="btn" id="new-partido-btn">+ Nuevo partido</button>
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt" id="liga-title">Liga</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="import-btn">📂 Importar Excel</button>
+        <button class="btn btn-primary" id="new-partido-btn">+ Partido</button>
         <button class="btn" id="logout-btn" style="font-size:11px;padding:4px 12px;">Cerrar sesión</button>
       </div>
     </header>
 
-    <div class="stats-bar" id="stats-bar" style="display:none;">
-      <div class="stat-item"><div class="stat-label">Partidos</div><div class="stat-val" id="st-total">0</div></div>
-      <div class="stat-item"><div class="stat-label">Victorias</div><div class="stat-val" id="st-wins" style="color:#34d399;">0</div></div>
-      <div class="stat-item"><div class="stat-label">Empates</div><div class="stat-val" id="st-draws" style="color:#fbbf24;">0</div></div>
-      <div class="stat-item"><div class="stat-label">Derrotas</div><div class="stat-val" id="st-losses" style="color:#f87171;">0</div></div>
-      <div class="stat-item"><div class="stat-label">Goles a favor</div><div class="stat-val" id="st-gf">0</div></div>
-      <div class="stat-item"><div class="stat-label">Goles en contra</div><div class="stat-val" id="st-gc">0</div></div>
+    <!-- KPIs -->
+    <div class="kpi-strip">
+      <div class="kpi glass k1"><div class="kpi-lbl">Partidos</div><div class="kpi-val" id="st-total">—</div><div class="kpi-sub">jugados</div></div>
+      <div class="kpi glass k2"><div class="kpi-lbl">Victorias</div><div class="kpi-val" id="st-wins" style="color:#34d399;">—</div><div class="kpi-sub">ganados</div></div>
+      <div class="kpi glass k3"><div class="kpi-lbl">Empates</div><div class="kpi-val" id="st-draws" style="color:#fbbf24;">—</div><div class="kpi-sub">empatados</div></div>
+      <div class="kpi glass k4"><div class="kpi-lbl">Derrotas</div><div class="kpi-val" id="st-losses" style="color:#f87171;">—</div><div class="kpi-sub">perdidos</div></div>
     </div>
 
-    <div class="partido-list" id="partido-list">
-      <div class="empty-state">Cargando partidos...</div>
+    <!-- CLASIFICACIÓN -->
+    <div class="glass full-panel">
+      <div class="panel-hdr">
+        <div class="ptitle" style="margin-bottom:0;">Clasificación</div>
+      </div>
+      <div class="tbl-scroll-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th style="width:36px;">Pos</th>
+              <th>Equipo</th>
+              <th class="tr" style="width:36px;">PJ</th>
+              <th class="tr" style="width:36px;">V</th>
+              <th class="tr" style="width:36px;">E</th>
+              <th class="tr" style="width:36px;">D</th>
+              <th class="tr" style="width:40px;">GF</th>
+              <th class="tr" style="width:40px;">GC</th>
+              <th class="tr" style="width:44px;">DG</th>
+              <th class="tr" style="width:44px;">Pts</th>
+            </tr>
+          </thead>
+          <tbody id="clasificacion-body">
+            <tr><td colspan="10" class="empty-state">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PARTIDOS -->
+    <div class="glass full-panel">
+      <div class="panel-hdr">
+        <div class="ptitle" style="margin-bottom:0;">Partidos</div>
+      </div>
+      <div class="tbl-scroll-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Mi equipo</th>
+              <th>Rival</th>
+              <th class="tr">Fecha</th>
+              <th class="tr">Lugar</th>
+              <th class="tr">Result.</th>
+              <th class="tr" style="width:100px;"></th>
+            </tr>
+          </thead>
+          <tbody id="partidos-body">
+            <tr><td colspan="6" class="empty-state">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -112,8 +156,8 @@
   <div class="modal-backdrop" id="modal-partido">
     <div class="modal">
       <h3>Nuevo partido</h3>
-      <div class="form-group">
-        <label>Equipo *</label>
+      <div class="form-group" id="equipo-group">
+        <label>Equipo de la liga *</label>
         <select id="f-equipo"></select>
       </div>
       <div class="form-group">
@@ -146,7 +190,7 @@
       </div>
       <div class="form-actions">
         <button class="btn btn-sm" id="partido-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
-        <button class="btn btn-sm" id="partido-save">Guardar</button>
+        <button class="btn btn-sm btn-primary" id="partido-save">Guardar</button>
       </div>
     </div>
   </div>
@@ -159,7 +203,7 @@
       <div id="asist-content"><div class="empty-state">Cargando jugadores...</div></div>
       <div class="form-actions">
         <button class="btn btn-sm" id="asist-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
-        <button class="btn btn-sm" id="asist-save">Guardar asistencias</button>
+        <button class="btn btn-sm btn-primary" id="asist-save">Guardar asistencias</button>
       </div>
     </div>
   </div>
@@ -169,58 +213,49 @@
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
 
     const ligaId     = localStorage.getItem('current_liga_id');
-    const ligaNombre = localStorage.getItem('current_liga_nombre') || 'Partidos';
+    const ligaNombre = localStorage.getItem('current_liga_nombre') || 'Liga';
     if (!ligaId) window.location.replace('/ligas.html');
 
     document.getElementById('liga-title').textContent = ligaNombre;
+
     document.getElementById('logout-btn').addEventListener('click', () => {
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('username');
       window.location.replace('/login.html');
     });
     document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/ligas.html');
+    document.getElementById('import-btn').addEventListener('click', () => window.location.href = '/import-liga.html');
 
     let currentPartidoId = null;
-    let currentEquipoId  = null;
+    let equiposEnLiga    = [];
 
-    async function loadPartidos() {
-      const list = document.getElementById('partido-list');
-      const partidos = await apiFetch(`/ligas/${ligaId}/partidos`);
-      if (!partidos || partidos.length === 0) {
-        list.innerHTML = '<div class="empty-state">No hay partidos registrados.<br>Pulsa <strong>+ Nuevo partido</strong> para añadir.</div>';
-        document.getElementById('stats-bar').style.display = 'none';
-        return;
-      }
-      renderStats(partidos);
-      list.innerHTML = partidos.map(p => {
-        const fecha  = p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : '—';
-        const lugar  = p.lugar || '—';
-        const result = p.resultado || `${p.golesFavor}-${p.golesContra}`;
-        return `
-        <div class="partido-card">
-          <div class="partido-header">
-            <div class="partido-rival">vs ${p.rival}</div>
-            <div class="partido-result">${result}</div>
-          </div>
-          <div class="partido-meta">
-            <span>📅 ${fecha}</span>
-            <span>📍 ${lugar}</span>
-            <span>⚽ ${p.golesFavor} - ${p.golesContra}</span>
-          </div>
-          <div class="partido-actions">
-            <button class="btn btn-sm" onclick="openAsistencias(${p.id}, ${p.equipoId}, '${p.rival.replace(/'/g,"\\'")}')">Asistencias</button>
-            <button class="btn btn-sm" style="color:#f87171;" onclick="deletePartido(${p.id})">Eliminar</button>
-          </div>
-        </div>`;
-      }).join('');
+    /* ── Inicialización ─────────────────────────────────────────── */
+    async function init() {
+      const [equipoIds, todosEquipos] = await Promise.all([
+        apiFetch(`/ligas/${ligaId}/equipos`),
+        apiFetch('/equipos')
+      ]);
+      const ids = equipoIds || [];
+      equiposEnLiga = (todosEquipos || []).filter(e => ids.includes(e.id));
+      await loadAll();
     }
 
-    function renderStats(partidos) {
-      const bar = document.getElementById('stats-bar');
-      bar.style.display = 'flex';
-      let wins=0, draws=0, losses=0, gf=0, gc=0;
+    async function loadAll() {
+      const partidos = await apiFetch(`/ligas/${ligaId}/partidos`);
+      renderKpis(partidos || []);
+      renderClasificacion(partidos || []);
+      renderPartidos(partidos || []);
+    }
+
+    function equipoNombre(id) {
+      const e = equiposEnLiga.find(e => e.id === id);
+      return e ? e.nombre : `Equipo ${id}`;
+    }
+
+    /* ── KPIs ───────────────────────────────────────────────────── */
+    function renderKpis(partidos) {
+      let wins=0, draws=0, losses=0;
       for (const p of partidos) {
-        gf += p.golesFavor; gc += p.golesContra;
         if (p.golesFavor > p.golesContra) wins++;
         else if (p.golesFavor === p.golesContra) draws++;
         else losses++;
@@ -229,20 +264,85 @@
       document.getElementById('st-wins').textContent   = wins;
       document.getElementById('st-draws').textContent  = draws;
       document.getElementById('st-losses').textContent = losses;
-      document.getElementById('st-gf').textContent     = gf;
-      document.getElementById('st-gc').textContent     = gc;
     }
 
-    async function loadEquipos() {
-      const equipos = await apiFetch('/equipos');
-      const sel = document.getElementById('f-equipo');
-      sel.innerHTML = equipos && equipos.length
-        ? equipos.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('')
-        : '<option value="">Sin equipos</option>';
+    /* ── Clasificación ──────────────────────────────────────────── */
+    function renderClasificacion(partidos) {
+      const tbody = document.getElementById('clasificacion-body');
+      if (equiposEnLiga.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state">Añade equipos a esta liga para ver la clasificación.</td></tr>`;
+        return;
+      }
+      const stats = {};
+      for (const e of equiposEnLiga) {
+        stats[e.id] = { nombre: e.nombre, pj:0, v:0, emp:0, d:0, gf:0, gc:0 };
+      }
+      for (const p of partidos) {
+        const s = stats[p.equipoId];
+        if (!s) continue;
+        s.pj++; s.gf += p.golesFavor; s.gc += p.golesContra;
+        if (p.golesFavor > p.golesContra) s.v++;
+        else if (p.golesFavor === p.golesContra) s.emp++;
+        else s.d++;
+      }
+      const rows = Object.values(stats)
+        .map(s => ({ ...s, dg: s.gf - s.gc, pts: s.v*3 + s.emp }))
+        .sort((a,b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
+
+      tbody.innerHTML = rows.map((r, i) => {
+        const rank = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
+        const dg   = r.dg > 0 ? `+${r.dg}` : r.dg;
+        return `<tr>
+          <td><span class="rnk ${rank}">${i+1}</span></td>
+          <td>${r.nombre}</td>
+          <td class="tr">${r.pj}</td>
+          <td class="tr">${r.v}</td>
+          <td class="tr">${r.emp}</td>
+          <td class="tr">${r.d}</td>
+          <td class="tr">${r.gf}</td>
+          <td class="tr">${r.gc}</td>
+          <td class="tr">${dg}</td>
+          <td class="tr pts-cell">${r.pts}</td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="10" class="empty-state">Sin partidos registrados aún.</td></tr>`;
     }
 
+    /* ── Tabla partidos ─────────────────────────────────────────── */
+    function renderPartidos(partidos) {
+      const tbody = document.getElementById('partidos-body');
+      if (!partidos.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Sin partidos. Pulsa <strong>+ Partido</strong> para añadir.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = partidos.map(p => {
+        const fecha  = p.fecha ? new Date(p.fecha + 'T00:00:00').toLocaleDateString('es-ES') : '—';
+        const lugar  = p.lugar === 'local' ? '🏠' : p.lugar === 'visitante' ? '✈️' : '—';
+        const result = p.resultado || `${p.golesFavor}-${p.golesContra}`;
+        const cls    = p.golesFavor > p.golesContra ? 'badge-w' : p.golesFavor === p.golesContra ? 'badge-d' : 'badge-l';
+        return `<tr>
+          <td>${equipoNombre(p.equipoId)}</td>
+          <td>${p.rival}</td>
+          <td class="tr">${fecha}</td>
+          <td class="tr">${lugar}</td>
+          <td class="tr"><span class="${cls}">${result}</span></td>
+          <td class="tr">
+            <button class="btn btn-sm" onclick="openAsistencias(${p.id},${p.equipoId},'${esc(p.rival)}')">👥</button>
+            <button class="btn btn-sm" style="color:#f87171;" onclick="deletePartido(${p.id})">✕</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+    /* ── Crear partido ──────────────────────────────────────────── */
     function openNew() {
-      loadEquipos();
+      if (equiposEnLiga.length === 0) {
+        alert('Esta liga no tiene equipos asignados.\nVe a Ligas → Añadir equipo primero.');
+        return;
+      }
+      document.getElementById('f-equipo').innerHTML =
+        equiposEnLiga.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
       document.getElementById('f-rival').value = '';
       document.getElementById('f-fecha').value = '';
       document.getElementById('f-lugar').value = '';
@@ -252,104 +352,93 @@
     }
 
     async function savePartido() {
-      const equipoId = document.getElementById('f-equipo').value;
-      const rival    = document.getElementById('f-rival').value.trim();
+      const equipoId    = Number(document.getElementById('f-equipo').value);
+      const rival       = document.getElementById('f-rival').value.trim();
+      const golesFavor  = Number(document.getElementById('f-gf').value);
+      const golesContra = Number(document.getElementById('f-gc').value);
       if (!rival) { alert('El rival es obligatorio'); return; }
-      const body = {
-        equipoId: Number(equipoId),
-        rival,
-        fecha:       document.getElementById('f-fecha').value || null,
-        lugar:       document.getElementById('f-lugar').value || null,
-        resultado:   null,
-        golesFavor:  Number(document.getElementById('f-gf').value),
-        golesContra: Number(document.getElementById('f-gc').value)
-      };
       await apiFetch(`/ligas/${ligaId}/partidos`, {
-        method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+        method: 'POST',
+        body: JSON.stringify({
+          equipoId, rival,
+          fecha:    document.getElementById('f-fecha').value || null,
+          lugar:    document.getElementById('f-lugar').value || null,
+          resultado: `${golesFavor}-${golesContra}`,
+          golesFavor, golesContra
+        })
       });
       closePartidoModal();
-      loadPartidos();
+      loadAll();
     }
 
     async function deletePartido(id) {
       if (!confirm('¿Eliminar este partido?')) return;
       await apiFetch(`/ligas/${ligaId}/partidos/${id}`, { method: 'DELETE' });
-      loadPartidos();
+      loadAll();
     }
 
+    /* ── Asistencias ────────────────────────────────────────────── */
     async function openAsistencias(partidoId, equipoId, rival) {
       currentPartidoId = partidoId;
-      currentEquipoId  = equipoId;
       document.getElementById('asist-title').textContent = `Asistencias · vs ${rival}`;
       document.getElementById('asist-content').innerHTML = '<div class="empty-state">Cargando...</div>';
       document.getElementById('modal-asistencia').classList.add('open');
-
       const [jugadores, existing] = await Promise.all([
         apiFetch(`/equipos/${equipoId}/jugadores`),
         apiFetch(`/ligas/${ligaId}/partidos/${partidoId}/asistencias`)
       ]);
-
       const existMap = {};
       if (existing) existing.forEach(a => existMap[a.jugadorId] = a);
-
-      if (!jugadores || jugadores.length === 0) {
+      if (!jugadores || !jugadores.length) {
         document.getElementById('asist-content').innerHTML = '<div class="empty-state">No hay jugadores en este equipo.</div>';
         return;
       }
-
       document.getElementById('asist-content').innerHTML = `
         <table class="asistencia-table">
-          <thead><tr>
-            <th>Jugador</th><th>Pos</th>
-            <th style="text-align:center">Jugó</th>
-            <th style="text-align:center">Titular</th>
-            <th style="text-align:center">Goles</th>
-            <th style="text-align:center">Min</th>
+          <thead><tr><th>Jugador</th><th>Pos</th>
+            <th style="text-align:center">Jugó</th><th style="text-align:center">Titular</th>
+            <th style="text-align:center">Goles</th><th style="text-align:center">Min</th>
           </tr></thead>
-          <tbody>
-            ${jugadores.map(j => {
-              const ex = existMap[j.id] || {};
-              return `<tr data-jugador="${j.id}">
-                <td>${j.nombre}</td>
-                <td style="color:var(--txt2)">${j.posicion || '—'}</td>
-                <td style="text-align:center"><input type="checkbox" class="cb-asistio" ${ex.asistio !== false ? 'checked' : ''} /></td>
-                <td style="text-align:center"><input type="checkbox" class="cb-titular" ${ex.titular ? 'checked' : ''} /></td>
-                <td style="text-align:center"><input type="number" class="inp-goles" min="0" value="${ex.goles || 0}" /></td>
-                <td style="text-align:center"><input type="number" class="inp-minutos" min="0" value="${ex.minutos || 0}" /></td>
-              </tr>`;
-            }).join('')}
-          </tbody>
+          <tbody>${jugadores.map(j => {
+            const ex = existMap[j.id] || {};
+            return `<tr data-jugador="${j.id}">
+              <td>${j.nombre}</td><td style="color:var(--txt2)">${j.posicion||'—'}</td>
+              <td style="text-align:center"><input type="checkbox" class="cb-asistio" ${ex.asistio!==false?'checked':''}/></td>
+              <td style="text-align:center"><input type="checkbox" class="cb-titular" ${ex.titular?'checked':''}/></td>
+              <td style="text-align:center"><input type="number" class="inp-goles" min="0" value="${ex.goles||0}"/></td>
+              <td style="text-align:center"><input type="number" class="inp-minutos" min="0" value="${ex.minutos||0}"/></td>
+            </tr>`;
+          }).join('')}</tbody>
         </table>`;
     }
 
     async function saveAsistencias() {
       const rows = document.querySelectorAll('#asist-content tbody tr');
-      const asistencias = Array.from(rows).map(row => ({
-        jugadorId: Number(row.dataset.jugador),
-        asistio:   row.querySelector('.cb-asistio').checked,
-        titular:   row.querySelector('.cb-titular').checked,
-        goles:     Number(row.querySelector('.inp-goles').value),
-        minutos:   Number(row.querySelector('.inp-minutos').value)
+      const asistencias = Array.from(rows).map(r => ({
+        jugadorId: Number(r.dataset.jugador),
+        asistio:   r.querySelector('.cb-asistio').checked,
+        titular:   r.querySelector('.cb-titular').checked,
+        goles:     Number(r.querySelector('.inp-goles').value),
+        minutos:   Number(r.querySelector('.inp-minutos').value)
       }));
       await apiFetch(`/ligas/${ligaId}/partidos/${currentPartidoId}/asistencias`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ asistencias })
+        method: 'POST', body: JSON.stringify({ asistencias })
       });
       closeAsistenciaModal();
     }
 
-    function closePartidoModal()   { document.getElementById('modal-partido').classList.remove('open'); }
-    function closeAsistenciaModal(){ document.getElementById('modal-asistencia').classList.remove('open'); }
+    function closePartidoModal()    { document.getElementById('modal-partido').classList.remove('open'); }
+    function closeAsistenciaModal() { document.getElementById('modal-asistencia').classList.remove('open'); }
 
     document.getElementById('new-partido-btn').addEventListener('click', openNew);
     document.getElementById('partido-cancel').addEventListener('click', closePartidoModal);
     document.getElementById('partido-save').addEventListener('click', savePartido);
     document.getElementById('asist-cancel').addEventListener('click', closeAsistenciaModal);
     document.getElementById('asist-save').addEventListener('click', saveAsistencias);
-    document.getElementById('modal-partido').addEventListener('click', e => { if (e.target === e.currentTarget) closePartidoModal(); });
-    document.getElementById('modal-asistencia').addEventListener('click', e => { if (e.target === e.currentTarget) closeAsistenciaModal(); });
+    document.getElementById('modal-partido').addEventListener('click', e => { if (e.target===e.currentTarget) closePartidoModal(); });
+    document.getElementById('modal-asistencia').addEventListener('click', e => { if (e.target===e.currentTarget) closeAsistenciaModal(); });
 
-    loadPartidos();
+    init();
   </script>
 
 </body>
