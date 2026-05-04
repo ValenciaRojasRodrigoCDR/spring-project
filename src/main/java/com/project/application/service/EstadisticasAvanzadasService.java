@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,7 @@ public class EstadisticasAvanzadasService implements GetEstadisticasAvanzadasQue
         JugadorStat masEficiente = jugadores.stream()
                 .filter(j -> j.getPartidosJugados() >= MIN_PARTIDOS_EFICIENCIA)
                 .max(Comparator.comparingDouble(Jugador::getGolPorPartido))
-                .map(j -> new JugadorStat(j.getNombre(), String.format("%.2f goles/partido", j.getGolPorPartido())))
+                .map(j -> new JugadorStat(j.getNombre(), String.format(Locale.ROOT, "%.2f goles/partido", j.getGolPorPartido())))
                 .orElse(new JugadorStat("—", "—"));
 
         JugadorStat masPartidosSinMarcar = jugadores.stream()

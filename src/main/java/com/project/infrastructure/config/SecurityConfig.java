@@ -34,7 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/jugadores/*/foto").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/", "/login.html", "/index.html", "/profile.html", "/import-club.html", "/club.html", "/estadisticas.html", "/jugadores.html", "/editar-jugador.html", "/css/**", "/js/**", "/assets/**").permitAll()
+                        .requestMatchers("/", "/login.html", "/index.html", "/profile.html", "/import-club.html", "/club.html", "/estadisticas.html", "/estadisticas-avanzadas.html", "/jugadores.html", "/editar-jugador.html", "/css/**", "/js/**", "/assets/**").permitAll()
                         // Mutaciones — solo ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/jugadores").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/jugadores/**").hasRole("ADMIN")

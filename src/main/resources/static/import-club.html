@@ -462,6 +462,12 @@
         }))
       };
 
+      // TODO: RENDIMIENTO EN CHROME — IMPORTACIÓN
+      // El proceso de parse del Excel + envío bloquea el hilo principal en Chrome con archivos grandes.
+      // Mejoras pendientes:
+      //   - Mover el parse de XLSX a un Web Worker para no bloquear la UI
+      //   - Mostrar progress bar real (porcentaje de filas procesadas) en lugar del spinner actual
+      //   - Comprimir el payload JSON antes de enviarlo si supera un umbral de tamaño
       const job = await apiFetch('/equipos/importar', { method: 'POST', body: JSON.stringify(payload) });
 
       if (!job?.jobId) {
