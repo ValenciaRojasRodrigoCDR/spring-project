@@ -7,6 +7,11 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      max-lifetime: 600000
+      connection-timeout: 20000
 
   h2:
     console:
@@ -35,6 +40,10 @@ spring:
 
 server:
   port: 3000
+  compression:
+    enabled: true
+    mime-types: application/json,application/javascript,text/css,text/html,text/plain
+    min-response-size: 1024
 
 app:
   jwt:

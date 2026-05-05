@@ -19,8 +19,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -82,15 +85,20 @@ public class JugadorController {
     }
 
     @GetMapping("/{id}/foto")
-    public ResponseEntity<byte[]> getFoto(@PathVariable Long id) {
+    public ResponseEntity<Resource> getFoto(@PathVariable Long id) {
         var jugador = jugadorRepository.findById(id).orElse(null);
         if (jugador == null || jugador.getFotoUrl() == null) {
             return ResponseEntity.notFound().build();
         }
         try {
             Path path = Paths.get(uploadDir, jugador.getFotoUrl());
-            byte[] bytes = Files.readAllBytes(path);
-            return ResponseEntity.ok().contentType(resolveMediaType(jugador.getFotoUrl())).body(bytes);
+            Resource resource = new FileSystemResource(path);
+            if (!resource.exists()) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok()
+                    .contentType(resolveMediaType(jugador.getFotoUrl()))
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=86400, public")
+                    .contentLength(resource.contentLength())
+                    .body(resource);
         } catch (IOException e) {
             return ResponseEntity.notFound().build();
         }

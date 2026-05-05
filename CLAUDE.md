@@ -89,3 +89,13 @@ Do not add Javadoc or inline comments to model classes, DTOs, enums, or records.
 ## Testing
 
 JUnit 5 + Mockito via `spring-boot-starter-test`. H2 in-memory DB is the default datasource — create `src/test/resources/application-test.yml` to override if needed. Test directory structure mirrors `src/main/java/com/project/`.
+
+## Workflow after every code change
+
+After **any** code change, always run this sequence before reporting the task as done:
+1. `mvn test` — verify all tests pass
+2. `mvn clean install -DskipTests` — build the JAR
+3. Kill the running server process
+4. `mvn spring-boot:run -Dspring.profiles.active=local` — restart the server
+
+The user only needs to press F5 to see changes. Never skip the test step.
