@@ -29,6 +29,14 @@
 
   </div>
 
+  <style>
+    /* Opt-C: reduce reflow cost of backdrop-filter by isolating each card in its own stacking context */
+    #content .glass { contain: layout style; transform: translateZ(0); }
+    /* Opt-A: cards start invisible; IntersectionObserver adds .card-visible */
+    #content .equipo-card { opacity: 0; transform: translateY(10px); transition: opacity .22s ease, transform .22s ease; }
+    #content .equipo-card.card-visible { opacity: 1; transform: none; }
+  </style>
+
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
@@ -37,15 +45,21 @@
       window.location.href = '/index.html';
     });
 
-    // TODO: RENDIMIENTO EN CHROME
-    // La carga de esta pantalla penaliza en Chrome cuando hay muchos equipos con imagen.
-    // Mejoras pendientes:
-    //   - Lazy-load de escudos con IntersectionObserver (solo cargar imagen al entrar en viewport)
-    //   - Skeleton screens mientras llega la respuesta de /api/equipos
-    //   - Paginar o virtualizar la lista si supera N equipos
-    //   - Revisar reflows de CSS: los cálculos de glassmorphism (backdrop-filter) son costosos en Chrome
-    document.addEventListener('DOMContentLoaded', async () => {
-      const equipos = await apiFetch('/equipos');
+    /* Opt-E: sessionStorage cache — avoids re-fetch on back navigation */
+    const EQUIPOS_CACHE = 'equipos_cache';
+    function getCached() { try { return JSON.parse(sessionStorage.getItem(EQUIPOS_CACHE)); } catch { return null; } }
+    function setCache(data) { try { sessionStorage.setItem(EQUIPOS_CACHE, JSON.stringify(data)); } catch {} }
+    function clearCache() { sessionStorage.removeItem(EQUIPOS_CACHE); }
+
+    /* Opt-A: reveal cards as they enter viewport */
+    function observeCards(container) {
+      const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('card-visible'); io.unobserve(e.target); } });
+      }, { threshold: 0.05 });
+      container.querySelectorAll('.equipo-card').forEach(c => io.observe(c));
+    }
+
+    function renderEquipos(equipos) {
       const content = document.getElementById('content');
 
       if (!equipos || equipos.length === 0) {
@@ -59,7 +73,7 @@
       }
 
       content.innerHTML = equipos.map(e => `
-        <div class="glass full-panel" style="margin-bottom:var(--gap);">
+        <div class="equipo-card glass full-panel" style="margin-bottom:var(--gap);">
           <div class="ptitle">${e.nombre}</div>
           <div class="profile-grid">
             <div class="profile-field">
@@ -86,21 +100,25 @@
           </div>
         </div>`).join('');
 
+      observeCards(content);
+
       content.querySelectorAll('.stats-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          window.location.href = `/estadisticas.html?equipoId=${btn.dataset.id}`;
-        });
+        btn.addEventListener('click', () => { window.location.href = `/estadisticas.html?equipoId=${btn.dataset.id}`; });
       });
-
       content.querySelectorAll('.jugadores-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          window.location.href = `/jugadores.html?equipoId=${btn.dataset.id}&from=club`;
-        });
+        btn.addEventListener('click', () => { window.location.href = `/jugadores.html?equipoId=${btn.dataset.id}&from=club`; });
       });
-
       content.querySelectorAll('.editar-btn').forEach(btn => {
         btn.addEventListener('click', () => openModal(btn.dataset));
       });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const cached = getCached();
+      if (cached) { renderEquipos(cached); return; }
+      const equipos = await apiFetch('/equipos');
+      setCache(equipos);
+      renderEquipos(equipos);
     });
 
     // ── Modal ──────────────────────────────────────────────────────────────
@@ -137,6 +155,7 @@
         errorEl.textContent = 'Error al guardar los cambios';
         return;
       }
+      clearCache();
       closeModal();
       window.location.reload();
     });

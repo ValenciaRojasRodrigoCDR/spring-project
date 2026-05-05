@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Ligas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <style>
+    .liga-list { display:flex; flex-direction:column; gap:12px; }
+    .liga-card {
+      background:var(--glass); border:1px solid var(--glass-brd);
+      border-radius:var(--radius-md); padding:16px 20px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .liga-header { display:flex; align-items:center; justify-content:space-between; }
+    .liga-name { font-weight:700; font-size:15px; }
+    .liga-meta { font-size:12px; color:var(--txt2); }
+    .liga-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-sm { font-size:11px; padding:4px 12px; }
+    .equipos-strip {
+      display:flex; gap:6px; flex-wrap:wrap; align-items:center;
+      padding-top:6px; border-top:1px solid var(--glass-brd);
+    }
+    .equipo-chip {
+      display:flex; align-items:center; gap:5px;
+      background:rgba(167,139,250,.12); border:1px solid rgba(167,139,250,.25);
+      border-radius:20px; padding:2px 10px 2px 8px; font-size:11px;
+    }
+    .equipo-chip-remove {
+      cursor:pointer; color:#f87171; font-size:13px; line-height:1;
+      background:none; border:none; padding:0; margin-left:2px;
+    }
+    .btn-add-equipo {
+      font-size:11px; padding:2px 10px;
+      background:rgba(96,165,250,.10); border:1px dashed rgba(96,165,250,.35);
+      border-radius:20px; color:#60a5fa; cursor:pointer;
+    }
+    .btn-add-equipo:hover { background:rgba(96,165,250,.20); }
+    .modal-backdrop {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
+      z-index:100; align-items:center; justify-content:center;
+    }
+    .modal-backdrop.open { display:flex; }
+    .modal {
+      background:#1a1040; border:1px solid var(--glass-brd);
+      border-radius:var(--radius-lg); padding:28px 32px;
+      width:min(440px, 92vw); display:flex; flex-direction:column; gap:16px;
+    }
+    .modal h3 { margin:0; font-size:17px; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:12px; color:var(--txt2); }
+    .form-group input, .form-group textarea, .form-group select {
+      background:var(--glass); border:1px solid var(--glass-brd);
+      border-radius:var(--radius-sm); color:var(--txt);
+      padding:8px 12px; font-family:inherit; font-size:13px; outline:none;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:#a78bfa; }
+    .form-group select option { background:#1a1040; }
+    .form-actions { display:flex; justify-content:flex-end; gap:10px; }
+    .empty-state { text-align:center; color:var(--txt2); padding:40px 0; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr">
+      <div class="logo" style="cursor:pointer;" id="back-btn">
+        <span style="font-size:20px;margin-right:6px;">←</span>
+        <div>
+          <div class="logo-txt">Ligas</div>
+          <div class="logo-sub">Gestión de competiciones</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <button class="btn" id="new-liga-btn" style="display:none;">+ Nueva liga</button>
+        <button class="btn" id="logout-btn" style="font-size:11px;padding:4px 12px;">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <div class="liga-list" id="liga-list">
+      <div class="empty-state">Cargando ligas...</div>
+    </div>
+
+  </div>
+
+  <!-- Modal crear / editar liga -->
+  <div class="modal-backdrop" id="modal-liga">
+    <div class="modal">
+      <h3 id="modal-title">Nueva liga</h3>
+      <div class="form-group">
+        <label>Nombre *</label>
+        <input type="text" id="f-nombre" placeholder="Nombre de la liga" />
+      </div>
+      <div class="form-group">
+        <label>Temporada</label>
+        <input type="text" id="f-temporada" placeholder="Ej. 2024-25" />
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="f-descripcion" rows="3" placeholder="Descripción opcional"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sm" id="modal-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
+        <button class="btn btn-sm" id="modal-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal añadir equipo a liga -->
+  <div class="modal-backdrop" id="modal-equipo">
+    <div class="modal">
+      <h3>Añadir equipo a liga</h3>
+      <div class="form-group">
+        <label>Selecciona un equipo</label>
+        <select id="f-equipo-select"></select>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-sm" id="equipo-cancel" style="background:transparent;border:1px solid var(--glass-brd);">Cancelar</button>
+        <button class="btn btn-sm" id="equipo-save">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('logout-btn').addEventListener('click', clearSession);
+    document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/index.html');
+
+    // Mostrar controles de edición solo si puede editar ligas
+    if (canEditLigas()) {
+      document.getElementById('new-liga-btn').style.display = '';
+    }
+
+    let editingId   = null;
+    let addEquipoLigaId = null;
+    let allEquipos  = [];
+
+    async function loadLigas() {
+      const list = document.getElementById('liga-list');
+      const [ligas, equipos] = await Promise.all([
+        apiFetch('/ligas'),
+        apiFetch('/equipos')
+      ]);
+      allEquipos = equipos || [];
+
+      if (!ligas || ligas.length === 0) {
+        list.innerHTML = '<div class="empty-state">No tienes ligas creadas.<br>Pulsa <strong>+ Nueva liga</strong> para empezar.</div>';
+        return;
+      }
+
+      list.innerHTML = ligas.map(l => {
+        const equipoIds = l.equipoIds || [];
+        const equiposEnLiga = allEquipos.filter(e => equipoIds.includes(e.id));
+        const chipsHtml = equiposEnLiga.map(e =>
+          `<span class="equipo-chip">
+            ${e.nombre}
+            <button class="equipo-chip-remove" onclick="removeEquipo(${l.id},${e.id})" title="Quitar">×</button>
+          </span>`
+        ).join('');
+
+        return `
+        <div class="liga-card">
+          <div class="liga-header">
+            <div>
+              <div class="liga-name">${l.nombre}</div>
+              <div class="liga-meta">${l.temporada || 'Sin temporada'}${l.descripcion ? ' · ' + l.descripcion : ''}</div>
+            </div>
+            <div class="liga-actions">
+              <button class="btn btn-sm" onclick="openPartidos(${l.id},'${esc(l.nombre)}')">⚽ Partidos</button>
+              ${canEditLigas() ? `<button class="btn btn-sm" onclick="openEdit(${l.id},'${esc(l.nombre)}','${esc(l.temporada||'')}','${esc(l.descripcion||'')}')">Editar</button>` : ''}
+              ${canEditLigas() ? `<button class="btn btn-sm" style="color:#f87171;" onclick="deleteLiga(${l.id})">Eliminar</button>` : ''}
+            </div>
+          </div>
+          <div class="equipos-strip">
+            ${chipsHtml}
+            ${canEditLigas() ? `<button class="btn-add-equipo" onclick="openAddEquipo(${l.id})">+ Añadir equipo</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function esc(s) { return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+    function openPartidos(ligaId, ligaNombre) {
+      localStorage.setItem('current_liga_id', ligaId);
+      localStorage.setItem('current_liga_nombre', ligaNombre);
+      window.location.href = '/partidos.html';
+    }
+
+    function openNew() {
+      editingId = null;
+      document.getElementById('modal-title').textContent = 'Nueva liga';
+      document.getElementById('f-nombre').value = '';
+      document.getElementById('f-temporada').value = '';
+      document.getElementById('f-descripcion').value = '';
+      document.getElementById('modal-liga').classList.add('open');
+    }
+
+    function openEdit(id, nombre, temporada, descripcion) {
+      editingId = id;
+      document.getElementById('modal-title').textContent = 'Editar liga';
+      document.getElementById('f-nombre').value = nombre;
+      document.getElementById('f-temporada').value = temporada;
+      document.getElementById('f-descripcion').value = descripcion;
+      document.getElementById('modal-liga').classList.add('open');
+    }
+
+    function closeModal() { document.getElementById('modal-liga').classList.remove('open'); }
+
+    async function saveLiga() {
+      const nombre      = document.getElementById('f-nombre').value.trim();
+      const temporada   = document.getElementById('f-temporada').value.trim();
+      const descripcion = document.getElementById('f-descripcion').value.trim();
+      if (!nombre) { alert('El nombre es obligatorio'); return; }
+
+      const body = { nombre, temporada, descripcion };
+      if (editingId) {
+        await apiFetch(`/ligas/${editingId}`, { method: 'PUT', body: JSON.stringify(body) });
+      } else {
+        await apiFetch('/ligas', { method: 'POST', body: JSON.stringify(body) });
+      }
+      closeModal();
+      loadLigas();
+    }
+
+    async function deleteLiga(id) {
+      if (!confirm('¿Eliminar esta liga? Se borrarán todos sus partidos.')) return;
+      await apiFetch(`/ligas/${id}`, { method: 'DELETE' });
+      loadLigas();
+    }
+
+    async function openAddEquipo(ligaId) {
+      addEquipoLigaId = ligaId;
+      const liga = await apiFetch(`/ligas/${ligaId}`);
+      const ligaEquipoIds = liga ? (liga.equipoIds || []) : [];
+      const disponibles = allEquipos.filter(e => !ligaEquipoIds.includes(e.id));
+
+      const sel = document.getElementById('f-equipo-select');
+      sel.innerHTML = disponibles.length
+        ? disponibles.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('')
+        : '<option value="">No hay equipos disponibles</option>';
+
+      document.getElementById('modal-equipo').classList.add('open');
+    }
+
+    async function saveAddEquipo() {
+      const equipoId = document.getElementById('f-equipo-select').value;
+      if (!equipoId) { closeEquipoModal(); return; }
+      await apiFetch(`/ligas/${addEquipoLigaId}/equipos/${equipoId}`, { method: 'POST' });
+      closeEquipoModal();
+      loadLigas();
+    }
+
+    async function removeEquipo(ligaId, equipoId) {
+      await apiFetch(`/ligas/${ligaId}/equipos/${equipoId}`, { method: 'DELETE' });
+      loadLigas();
+    }
+
+    function closeEquipoModal() { document.getElementById('modal-equipo').classList.remove('open'); }
+
+    document.getElementById('new-liga-btn').addEventListener('click', openNew);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-save').addEventListener('click', saveLiga);
+    document.getElementById('modal-liga').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+    document.getElementById('equipo-cancel').addEventListener('click', closeEquipoModal);
+    document.getElementById('equipo-save').addEventListener('click', saveAddEquipo);
+    document.getElementById('modal-equipo').addEventListener('click', e => { if (e.target === e.currentTarget) closeEquipoModal(); });
+
+    loadLigas();
+  </script>
+
+</body>
+</html>

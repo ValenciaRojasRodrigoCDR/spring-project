@@ -1,5 +1,6 @@
 package com.project.infrastructure.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -31,19 +32,51 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // ── Rutas públicas ────────────────────────────────────────────────
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/jugadores/*/foto").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/", "/login.html", "/index.html", "/profile.html", "/import-club.html", "/club.html", "/estadisticas.html", "/estadisticas-avanzadas.html", "/jugadores.html", "/editar-jugador.html", "/css/**", "/js/**", "/assets/**").permitAll()
-                        // Mutaciones — solo ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/jugadores").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/jugadores/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/equipos").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/equipos/importar").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/excel/**").hasRole("ADMIN")
-                        // Lectura — cualquier autenticado
+                        .requestMatchers(
+                                "/", "/login.html", "/index.html", "/profile.html",
+                                "/import-club.html", "/club.html", "/estadisticas.html",
+                                "/estadisticas-avanzadas.html",
+                                "/jugadores.html", "/editar-jugador.html",
+                                "/ligas.html", "/partidos.html", "/import-liga.html",
+                                "/usuarios.html",
+                                "/css/**", "/js/**", "/assets/**"
+                        ).permitAll()
+
+                        // ── Gestión de usuarios (solo ADMIN) ──────────────────────────────
+                        .requestMatchers("/api/users/create").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,  "/api/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,  "/api/users/**").hasRole("ADMIN")
+
+                        // ── Ligas: mutaciones (ADMIN | LIGA_OWNER) ────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/ligas").hasAnyRole("ADMIN", "LIGA_OWNER")
+                        .requestMatchers(HttpMethod.PUT,    "/api/ligas/**").hasAnyRole("ADMIN", "LIGA_OWNER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/ligas/**").hasAnyRole("ADMIN", "LIGA_OWNER")
+                        .requestMatchers(HttpMethod.POST,   "/api/ligas/**").hasAnyRole("ADMIN", "LIGA_OWNER")
+
+                        // ── Equipos: mutaciones (ADMIN | EQUIPO_OWNER) ────────────────────
+                        .requestMatchers(HttpMethod.POST, "/api/equipos").hasAnyRole("ADMIN", "EQUIPO_OWNER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/equipos/**").hasAnyRole("ADMIN", "EQUIPO_OWNER")
+                        .requestMatchers(HttpMethod.POST, "/api/equipos/importar").hasAnyRole("ADMIN", "EQUIPO_OWNER")
+
+                        // ── Jugadores: crear (ADMIN | EQUIPO_OWNER); editar en controller ─
+                        .requestMatchers(HttpMethod.POST, "/api/jugadores").hasAnyRole("ADMIN", "EQUIPO_OWNER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/jugadores/**")
+                                .hasAnyRole("ADMIN", "EQUIPO_OWNER", "JUGADOR")
+
+                        // ── Excel: importar (ADMIN | EQUIPO_OWNER) ────────────────────────
+                        .requestMatchers(HttpMethod.POST, "/api/excel/**").hasAnyRole("ADMIN", "EQUIPO_OWNER")
+
+                        // ── Lectura: cualquier autenticado ────────────────────────────────
                         .anyRequest().authenticated()
                 )
+                // Sin token válido → 401 para que el frontend redirija a login
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

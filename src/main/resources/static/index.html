@@ -50,7 +50,7 @@
         </svg>
         <div>
           <div class="logo-txt">Mi perfil</div>
-          <div class="logo-sub">Panel de control</div>
+          <div class="logo-sub" id="role-badge">Panel de control</div>
         </div>
       </div>
       <div class="hdr-right">
@@ -72,6 +72,7 @@
     <!-- OPCIONES -->
     <div class="club-grid">
 
+      <!-- Tu club — visible para todos -->
       <div class="glass club-card" id="btn-mi-club">
         <div class="club-card-ico">🏆</div>
         <div class="club-card-title">Tu club</div>
@@ -79,20 +80,47 @@
         <div class="club-card-arrow">→</div>
       </div>
 
-      <div class="glass club-card" id="btn-crear-club">
+      <!-- Crear club — solo ADMIN y EQUIPO_OWNER -->
+      <div class="glass club-card" id="btn-crear-club" data-role="ADMIN,EQUIPO_OWNER">
         <div class="club-card-ico">✦</div>
         <div class="club-card-title">Crear club</div>
         <div class="club-card-sub">Crea un nuevo club y empieza a gestionar tu equipo</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <div class="glass club-card" id="btn-importar-club">
+      <!-- Importar club — solo ADMIN y EQUIPO_OWNER -->
+      <div class="glass club-card" id="btn-importar-club" data-role="ADMIN,EQUIPO_OWNER">
         <div class="club-card-ico">📂</div>
         <div class="club-card-title">Importar club</div>
         <div class="club-card-sub">Importa los datos de tu club desde un fichero Excel</div>
         <div class="club-card-arrow">→</div>
       </div>
 
+      <!-- Ligas — visible para todos -->
+      <div class="glass club-card" id="btn-ligas">
+        <div class="club-card-ico">🏅</div>
+        <div class="club-card-title">Ligas</div>
+        <div class="club-card-sub" id="ligas-sub">Cargando...</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+      <!-- Importar liga — solo ADMIN y LIGA_OWNER -->
+      <div class="glass club-card" id="btn-importar-liga" data-role="ADMIN,LIGA_OWNER">
+        <div class="club-card-ico">📥</div>
+        <div class="club-card-title">Importar liga</div>
+        <div class="club-card-sub">Importa partidos de una liga desde un fichero Excel</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+      <!-- Gestión de usuarios — solo ADMIN -->
+      <div class="glass club-card" id="btn-usuarios" data-role="ADMIN">
+        <div class="club-card-ico">👥</div>
+        <div class="club-card-title">Usuarios</div>
+        <div class="club-card-sub">Gestiona los usuarios y sus permisos</div>
+        <div class="club-card-arrow">→</div>
+      </div>
+
+      <!-- Mi perfil — visible para todos -->
       <div class="glass club-card" id="btn-perfil">
         <div class="club-card-ico">👤</div>
         <div class="club-card-title">Mi perfil</div>
@@ -109,14 +137,22 @@
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
 
     const username = localStorage.getItem('username') || '—';
-    document.getElementById('user-name').textContent = username;
-    document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+    document.getElementById('user-name').textContent    = username;
+    document.getElementById('user-avatar').textContent  = username.charAt(0).toUpperCase();
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('jwt_token');
-      localStorage.removeItem('username');
-      window.location.replace('/login.html');
-    });
+    const roleLabels = {
+      ADMIN:        '⚙️ Administrador',
+      LIGA_OWNER:   '🏅 Gestor de ligas',
+      EQUIPO_OWNER: '🏆 Gestor de equipos',
+      JUGADOR:      '⚽ Jugador'
+    };
+    const rol = getRole();
+    document.getElementById('role-badge').textContent = roleLabels[rol] || 'Panel de control';
+
+    document.getElementById('logout-btn').addEventListener('click', clearSession);
+
+    // Aplicar visibilidad según rol
+    applyRoleVisibility();
 
     async function loadEquipos() {
       const data = await apiFetch('/equipos');
@@ -129,24 +165,39 @@
           : `${data.length} equipos`;
       }
     }
+
+    async function loadLigas() {
+      const data = await apiFetch('/ligas');
+      const sub  = document.getElementById('ligas-sub');
+      if (!data || data.length === 0) {
+        sub.textContent = 'No hay ligas creadas';
+      } else {
+        sub.textContent = data.length === 1
+          ? `1 liga · ${data[0].nombre}`
+          : `${data.length} ligas`;
+      }
+    }
+
     loadEquipos();
+    loadLigas();
 
-    document.getElementById('welcome-card').addEventListener('click', () => {
-      window.location.href = '/profile.html';
-    });
+    document.getElementById('welcome-card').addEventListener('click', () => window.location.href = '/profile.html');
+    document.getElementById('btn-mi-club').addEventListener('click', () => window.location.href = '/club.html');
 
-    document.getElementById('btn-mi-club').addEventListener('click', () => {
-      window.location.href = '/club.html';
-    });
-    document.getElementById('btn-crear-club').addEventListener('click', () => {
-      window.location.href = '/crear-club.html';
-    });
-    document.getElementById('btn-importar-club').addEventListener('click', () => {
-      window.location.href = '/import-club.html';
-    });
-    document.getElementById('btn-perfil').addEventListener('click', () => {
-      window.location.href = '/profile.html';
-    });
+    const crearBtn = document.getElementById('btn-crear-club');
+    if (crearBtn) crearBtn.addEventListener('click', () => window.location.href = '/crear-club.html');
+
+    const importarBtn = document.getElementById('btn-importar-club');
+    if (importarBtn) importarBtn.addEventListener('click', () => window.location.href = '/import-club.html');
+
+    document.getElementById('btn-ligas').addEventListener('click', () => window.location.href = '/ligas.html');
+    document.getElementById('btn-perfil').addEventListener('click', () => window.location.href = '/profile.html');
+
+    const importLigaBtn = document.getElementById('btn-importar-liga');
+    if (importLigaBtn) importLigaBtn.addEventListener('click', () => window.location.href = '/import-liga.html');
+
+    const usuariosBtn = document.getElementById('btn-usuarios');
+    if (usuariosBtn) usuariosBtn.addEventListener('click', () => window.location.href = '/usuarios.html');
   </script>
 
 </body>

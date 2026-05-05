@@ -5,6 +5,7 @@ import com.project.application.port.in.UpdateJugadorUseCase;
 import com.project.application.port.out.JugadorRepository;
 import com.project.domain.model.Jugador;
 import com.project.infrastructure.adapter.in.web.dto.JugadorResponse;
+import com.project.infrastructure.util.Constants;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,7 +35,7 @@ public class JugadorController {
 
     private final CreateJugadorUseCase createJugadorUseCase;
     private final UpdateJugadorUseCase updateJugadorUseCase;
-    private final JugadorRepository jugadorRepository;
+    private final JugadorRepository    jugadorRepository;
 
     @Value("${app.upload-dir}")
     private String uploadDir;
@@ -65,7 +68,16 @@ public class JugadorController {
             @RequestParam(required = false) String posicion,
             @Min(0) @RequestParam(required = false) Integer dorsal,
             @Min(0) @RequestParam(required = false) Integer edad,
-            @RequestParam(required = false) MultipartFile foto) {
+            @RequestParam(required = false) MultipartFile foto,
+            Authentication authentication) {
+
+        // JUGADOR role can only edit their own profile
+        if (isJugadorRole(authentication)) {
+            Long myJugadorId = extractJugadorId(authentication);
+            if (myJugadorId == null || !myJugadorId.equals(id)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
 
         Jugador jugador = updateJugadorUseCase.update(new UpdateJugadorUseCase.UpdateJugadorCommand(
                 id, nombre, posicion, dorsal, edad, foto));
@@ -92,8 +104,21 @@ public class JugadorController {
         }
     }
 
+    private boolean isJugadorRole(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_" + Constants.ROLE_JUGADOR));
+    }
+
+    private Long extractJugadorId(Authentication auth) {
+        if (auth instanceof UsernamePasswordAuthenticationToken token) {
+            Object details = token.getDetails();
+            return details instanceof Long ? (Long) details : null;
+        }
+        return null;
+    }
+
     private MediaType resolveMediaType(String filename) {
-        if (filename.endsWith(".png")) return MediaType.IMAGE_PNG;
+        if (filename.endsWith(".png"))  return MediaType.IMAGE_PNG;
         if (filename.endsWith(".webp")) return MediaType.parseMediaType("image/webp");
         return MediaType.IMAGE_JPEG;
     }
