@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/login.html", "/index.html", "/profile.html",
                                 "/import-club.html", "/club.html", "/estadisticas.html",
+                                "/estadisticas-avanzadas.html",
                                 "/jugadores.html", "/editar-jugador.html",
                                 "/ligas.html", "/partidos.html", "/import-liga.html",
                                 "/usuarios.html",
