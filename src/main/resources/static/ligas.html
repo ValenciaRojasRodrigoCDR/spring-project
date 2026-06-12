@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>App · Ligas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <style>
@@ -46,7 +46,7 @@
     }
     .modal-backdrop.open { display:flex; }
     .modal {
-      background:#1a1040; border:1px solid var(--glass-brd);
+      background:rgba(8,8,8,0.96); border:1px solid var(--glass-brd);
       border-radius:var(--radius-lg); padding:28px 32px;
       width:min(440px, 92vw); display:flex; flex-direction:column; gap:16px;
     }
@@ -59,17 +59,17 @@
       padding:8px 12px; font-family:inherit; font-size:13px; outline:none;
     }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:#a78bfa; }
-    .form-group select option { background:#1a1040; }
+    .form-group select option { background:#080808; }
     .form-actions { display:flex; justify-content:flex-end; gap:10px; }
     .empty-state { text-align:center; color:var(--txt2); padding:40px 0; font-size:14px; }
   </style>
 </head>
 <body>
 
-  <div class="bg">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
   <div class="app">
@@ -135,6 +135,11 @@
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const _io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); _io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.ha').forEach((el, i) => { setTimeout(() => _io.observe(el), i * 40); });
 
     document.getElementById('logout-btn').addEventListener('click', clearSession);
     document.getElementById('back-btn').addEventListener('click', () => window.location.href = '/index.html');

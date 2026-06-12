@@ -24,9 +24,9 @@ class RootControllerTest {
     }
 
     @Test
-    void root_redirectsToLoginHtml() throws Exception {
+    void root_redirectsToLandingHtml() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login.html"));
+                .andExpect(redirectedUrl("/landing.html"));
     }
 }

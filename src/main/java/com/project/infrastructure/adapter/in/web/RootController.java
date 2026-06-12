@@ -8,6 +8,6 @@ public class RootController {
 
     @GetMapping("/")
     public String root() {
-        return "redirect:/login.html";
+        return "redirect:/landing.html";
     }
 }

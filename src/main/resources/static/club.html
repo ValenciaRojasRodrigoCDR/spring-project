@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>App · Mi club</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 </head>
 <body>
 
-  <div class="bg">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
   <div class="app">
@@ -40,6 +40,11 @@
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const _io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); _io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.ha').forEach((el, i) => { setTimeout(() => _io.observe(el), i * 40); });
 
     document.getElementById('back-btn').addEventListener('click', () => {
       window.location.href = '/index.html';
@@ -162,7 +167,7 @@
   </script>
 
   <!-- Modal editar equipo -->
-  <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;">
+  <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:999;align-items:center;justify-content:center;">
     <div class="glass" style="width:min(440px,92vw);padding:32px;position:relative;">
       <button onclick="closeModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:var(--txt2);font-size:20px;cursor:pointer;">✕</button>
       <div class="ptitle" style="margin-bottom:20px;">Editar equipo</div>
