@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>App · Liga</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <style>
@@ -20,7 +20,7 @@
     .tbl-scroll-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 2px; }
     .tbl-scroll-wrap .tbl thead th {
       position: sticky; top: 0; z-index: 1;
-      background: #12103a;
+      background: rgba(0,0,0,0.92);
     }
     /* ── Panel header ─────────────────────────────────────────── */
     .panel-hdr {
@@ -35,7 +35,7 @@
     }
     .modal-backdrop.open { display:flex; }
     .modal {
-      background:#1a1040; border:1px solid var(--glass-brd);
+      background:rgba(8,8,8,0.96); border:1px solid var(--glass-brd);
       border-radius:var(--radius-lg); padding:28px 32px;
       width:min(520px, 92vw); max-height:90vh; overflow-y:auto;
       display:flex; flex-direction:column; gap:14px;
@@ -50,7 +50,7 @@
       padding:8px 12px; font-family:inherit; font-size:13px; outline:none;
     }
     .form-group input:focus, .form-group select:focus { border-color:#a78bfa; }
-    .form-group select option { background:#1a1040; }
+    .form-group select option { background:#080808; }
     .form-actions { display:flex; justify-content:flex-end; gap:10px; }
     .divider { height:1px; background:var(--glass-brd); margin:4px 0; }
     .asistencia-table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -72,10 +72,10 @@
 </head>
 <body>
 
-  <div class="bg">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
   <div class="app">
@@ -91,7 +91,7 @@
     </header>
 
     <!-- KPIs -->
-    <div class="kpi-strip">
+    <div class="kpi-strip ha d1">
       <div class="kpi glass k1"><div class="kpi-lbl">Partidos</div><div class="kpi-val" id="st-total">—</div><div class="kpi-sub">jugados</div></div>
       <div class="kpi glass k2"><div class="kpi-lbl">Victorias</div><div class="kpi-val" id="st-wins" style="color:#34d399;">—</div><div class="kpi-sub">ganados</div></div>
       <div class="kpi glass k3"><div class="kpi-lbl">Empates</div><div class="kpi-val" id="st-draws" style="color:#fbbf24;">—</div><div class="kpi-sub">empatados</div></div>
@@ -211,6 +211,11 @@
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const _io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); _io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.ha').forEach((el, i) => { setTimeout(() => _io.observe(el), i * 40); });
 
     const ligaId     = localStorage.getItem('current_liga_id');
     const ligaNombre = localStorage.getItem('current_liga_nombre') || 'Liga';

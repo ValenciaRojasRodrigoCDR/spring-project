@@ -42,8 +42,8 @@ public class SecurityConfig {
                                 "/estadisticas-avanzadas.html",
                                 "/jugadores.html", "/editar-jugador.html",
                                 "/ligas.html", "/partidos.html", "/import-liga.html",
-                                "/usuarios.html",
-                                "/css/**", "/js/**", "/assets/**"
+                                "/usuarios.html", "/landing.html",
+                                "/css/**", "/js/**", "/assets/**", "/uploads/**"
                         ).permitAll()
 
                         // ── Gestión de usuarios (solo ADMIN) ──────────────────────────────

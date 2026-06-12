@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>App · Editar jugador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <style>
@@ -93,10 +93,10 @@
 </head>
 <body>
 
-  <div class="bg">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
   <div class="app">
@@ -107,7 +107,7 @@
       <div style="width:80px;"></div>
     </header>
 
-    <div class="glass edit-card">
+    <div class="glass edit-card ha d1">
       <div class="ptitle">Datos del jugador</div>
 
       <!-- FOTO -->
@@ -155,6 +155,11 @@
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    const _io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); _io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.ha').forEach((el, i) => { setTimeout(() => _io.observe(el), i * 40); });
 
     const params     = new URLSearchParams(window.location.search);
     const jugadorId  = params.get('jugadorId');

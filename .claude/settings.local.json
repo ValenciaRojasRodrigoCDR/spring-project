@@ -45,7 +45,27 @@
       "PowerShell($env:PATH += \";C:\\\\Users\\\\apache-maven-3.9.15\\\\bin\"; cd \"c:\\\\Users\\\\rodri\\\\OneDrive\\\\Desktop\\\\claude\\\\spring-project\\\\spring-project\"; mvn clean install -DskipTests 2>&1 | Select-String \"BUILD|ERROR\" | Select-Object -Last 5)",
       "PowerShell($env:PATH += \";C:\\\\Users\\\\apache-maven-3.9.15\\\\bin\"; cd \"c:\\\\Users\\\\rodri\\\\OneDrive\\\\Desktop\\\\claude\\\\spring-project\\\\spring-project\"; mvn clean install -DskipTests 2>&1 | Select-String \"ERROR|error:\" | Select-Object -First 20)",
       "PowerShell($env:PATH += \";C:\\\\Users\\\\apache-maven-3.9.15\\\\bin\"; cd \"c:\\\\Users\\\\rodri\\\\OneDrive\\\\Desktop\\\\claude\\\\spring-project\\\\spring-project\"; mvn clean install -DskipTests 2>&1 | Select-String \"BUILD|ERROR\" | Select-Object -Last 3)",
-      "PowerShell(Stop-Process -Id 33336 -Force -ErrorAction SilentlyContinue)"
+      "PowerShell(Stop-Process -Id 33336 -Force -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(Expand-Archive *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\rodri\\\\Downloads\\\\diseño-handoff\" -Recurse | ForEach-Object { $_.FullName })",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Process *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/landing.html)",
+      "Bash(powershell *)",
+      "Bash(git add *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(where ffmpeg *)",
+      "Bash(ls -la uploads/)",
+      "Bash(ffprobe -v error -show_entries stream=duration,width,height,avg_frame_rate,codec_name -of default=noprint_wrappers=0 \"uploads/transicion.webm\")",
+      "Bash(ffprobe -v error -show_entries stream=duration,width,height,avg_frame_rate,codec_name -of default=noprint_wrappers=0 \"/c/Users/rodri/Downloads/PixVerse_V6_Fusion_720P_2_Quiero_una_transicio.mp4\")",
+      "Bash(where ffmpeg.exe)",
+      "Bash('/c/Program Files/BlueStacks_nxt/ffmpeg.exe' -i /c/Users/rodri/OneDrive/Desktop/claude/spring-project/src/main/resources/static/uploads/transicion.webm)",
+      "Bash(mvn -q test)",
+      "Bash(mvn -q clean install -DskipTests)",
+      "Bash(taskkill *)"
     ]
   }
 }

@@ -39,14 +39,14 @@ class AuthControllerTest {
     @Test
     void login_validCredentials_returns200WithToken() throws Exception {
         when(loginUseCase.login(any())).thenReturn("jwt-token");
-        when(jwtUtil.extractRole(anyString())).thenReturn("ROLE_ADMIN");
+        when(jwtUtil.extractRole(anyString())).thenReturn("ADMIN");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new LoginRequest("admin", "admin"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("jwt-token"))
-                .andExpect(jsonPath("$.role").value("ROLE_ADMIN"));
+                .andExpect(jsonPath("$.role").value("ADMIN"));
     }
 
     @Test

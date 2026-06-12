@@ -3,68 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>App · Mi perfil</title>
+  <title>4M · Panel de control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
 </head>
 <body>
 
-  <!-- Background orbs -->
-  <div class="bg">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
   </div>
 
   <div class="app">
 
     <!-- HEADER -->
     <header class="hdr">
-      <div class="logo">
-        <svg id="logo-icon" class="logo-ico" width="96" height="96" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" style="border-radius:20px;flex-shrink:0;display:block;">
-          <defs>
-            <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#0f172a"/>
-              <stop offset="100%" stop-color="#0d0b1e"/>
-            </linearGradient>
-            <linearGradient id="acc2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#a78bfa"/>
-              <stop offset="100%" stop-color="#60a5fa"/>
-            </linearGradient>
-            <linearGradient id="txt2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#c4b5fd"/>
-              <stop offset="100%" stop-color="#93c5fd"/>
-            </linearGradient>
-          </defs>
-          <rect width="80" height="80" rx="18" fill="url(#bg2)"/>
-          <rect x="1" y="1" width="78" height="78" rx="17" fill="none" stroke="url(#acc2)" stroke-width="1.2"/>
-          <line x1="7" y1="7" x2="15" y2="7" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.7"/>
-          <line x1="7" y1="7" x2="7" y2="15" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.7"/>
-          <line x1="73" y1="7" x2="65" y2="7" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.7"/>
-          <line x1="73" y1="7" x2="73" y2="15" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.7"/>
-          <text x="40" y="50" text-anchor="middle" font-family="'Arial Black','Arial',sans-serif" font-size="36" font-weight="900" fill="url(#txt2)">4M</text>
-          <line x1="14" y1="58" x2="66" y2="58" stroke="url(#acc2)" stroke-width="0.8" stroke-opacity="0.4"/>
-          <text x="40" y="70" text-anchor="middle" font-family="Arial" font-size="7" font-weight="700" letter-spacing="2" fill="#94a3b8">DRINK TEAM</text>
-        </svg>
+      <div class="hdr-left">
+        <div class="logo">
+          <img src="assets/logo-navbar.svg" class="logo-ico" style="height:34px;width:auto;border-radius:0;" alt="4M" />
+        </div>
+        <div style="height:18px;width:0.5px;background:rgba(255,255,255,0.1);"></div>
         <div>
-          <div class="logo-txt">Mi perfil</div>
-          <div class="logo-sub" id="role-badge">Panel de control</div>
+          <div class="logo-txt" id="page-title">Panel de control</div>
+          <div class="logo-sub" id="role-badge">—</div>
         </div>
       </div>
       <div class="hdr-right">
         <div class="live-dot"></div>
         <span class="live-lbl">Activo</span>
-        <button class="btn" id="logout-btn" style="font-size:11px;padding:4px 12px;">Cerrar sesión</button>
+        <button class="btn" id="logout-btn" style="font-size:12px;padding:6px 14px;">Cerrar sesión</button>
       </div>
     </header>
 
     <!-- BIENVENIDA -->
-    <div class="user-welcome glass" id="welcome-card" style="cursor:pointer;" title="Ver mi perfil">
+    <div class="glass user-welcome ha" id="welcome-card" style="cursor:pointer;" title="Ver mi perfil">
       <div class="user-avatar" id="user-avatar">?</div>
       <div>
-        <div class="user-greeting">Bienvenido,</div>
+        <div class="user-greeting">Bienvenido de nuevo,</div>
         <div class="user-name" id="user-name">—</div>
       </div>
     </div>
@@ -72,56 +51,49 @@
     <!-- OPCIONES -->
     <div class="club-grid">
 
-      <!-- Tu club — visible para todos -->
-      <div class="glass club-card" id="btn-mi-club">
+      <div class="glass club-card ha d1" id="btn-mi-club">
         <div class="club-card-ico">🏆</div>
         <div class="club-card-title">Tu club</div>
         <div class="club-card-sub" id="club-sub">Cargando...</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Crear club — solo ADMIN y EQUIPO_OWNER -->
-      <div class="glass club-card" id="btn-crear-club" data-role="ADMIN,EQUIPO_OWNER">
+      <div class="glass club-card ha d2" id="btn-crear-club" data-role="ADMIN,EQUIPO_OWNER">
         <div class="club-card-ico">✦</div>
         <div class="club-card-title">Crear club</div>
         <div class="club-card-sub">Crea un nuevo club y empieza a gestionar tu equipo</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Importar club — solo ADMIN y EQUIPO_OWNER -->
-      <div class="glass club-card" id="btn-importar-club" data-role="ADMIN,EQUIPO_OWNER">
+      <div class="glass club-card ha d3" id="btn-importar-club" data-role="ADMIN,EQUIPO_OWNER">
         <div class="club-card-ico">📂</div>
         <div class="club-card-title">Importar club</div>
         <div class="club-card-sub">Importa los datos de tu club desde un fichero Excel</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Ligas — visible para todos -->
-      <div class="glass club-card" id="btn-ligas">
+      <div class="glass club-card ha d1" id="btn-ligas">
         <div class="club-card-ico">🏅</div>
         <div class="club-card-title">Ligas</div>
         <div class="club-card-sub" id="ligas-sub">Cargando...</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Importar liga — solo ADMIN y LIGA_OWNER -->
-      <div class="glass club-card" id="btn-importar-liga" data-role="ADMIN,LIGA_OWNER">
+      <div class="glass club-card ha d2" id="btn-importar-liga" data-role="ADMIN,LIGA_OWNER">
         <div class="club-card-ico">📥</div>
         <div class="club-card-title">Importar liga</div>
         <div class="club-card-sub">Importa partidos de una liga desde un fichero Excel</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Gestión de usuarios — solo ADMIN -->
-      <div class="glass club-card" id="btn-usuarios" data-role="ADMIN">
+      <div class="glass club-card ha d3" id="btn-usuarios" data-role="ADMIN">
         <div class="club-card-ico">👥</div>
         <div class="club-card-title">Usuarios</div>
         <div class="club-card-sub">Gestiona los usuarios y sus permisos</div>
         <div class="club-card-arrow">→</div>
       </div>
 
-      <!-- Mi perfil — visible para todos -->
-      <div class="glass club-card" id="btn-perfil">
+      <div class="glass club-card ha d4" id="btn-perfil">
         <div class="club-card-ico">👤</div>
         <div class="club-card-title">Mi perfil</div>
         <div class="club-card-sub">Consulta y gestiona los datos de tu cuenta de usuario</div>
@@ -134,25 +106,35 @@
 
   <script src="js/main.js"></script>
   <script>
-    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+    const loggedIn = !!localStorage.getItem('jwt_token');
 
-    const username = localStorage.getItem('username') || '—';
-    document.getElementById('user-name').textContent    = username;
-    document.getElementById('user-avatar').textContent  = username.charAt(0).toUpperCase();
+    if (loggedIn) {
+      const username = localStorage.getItem('username') || '—';
+      document.getElementById('user-name').textContent   = username;
+      document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
+      const roleLabels = {
+        ADMIN:        '⚙️ Administrador',
+        LIGA_OWNER:   '🏅 Gestor de ligas',
+        EQUIPO_OWNER: '🏆 Gestor de equipos',
+        JUGADOR:      '⚽ Jugador'
+      };
+      document.getElementById('role-badge').textContent = roleLabels[getRole()] || 'Panel de control';
+      document.getElementById('logout-btn').addEventListener('click', clearSession);
+      applyRoleVisibility();
+    } else {
+      document.getElementById('user-name').textContent   = 'Visitante';
+      document.getElementById('user-avatar').textContent = '?';
+      document.getElementById('role-badge').textContent  = 'Modo demo';
+      document.getElementById('logout-btn').textContent  = 'Iniciar sesión';
+      document.getElementById('logout-btn').addEventListener('click', () => window.location.href = '/login.html');
+    }
 
-    const roleLabels = {
-      ADMIN:        '⚙️ Administrador',
-      LIGA_OWNER:   '🏅 Gestor de ligas',
-      EQUIPO_OWNER: '🏆 Gestor de equipos',
-      JUGADOR:      '⚽ Jugador'
-    };
-    const rol = getRole();
-    document.getElementById('role-badge').textContent = roleLabels[rol] || 'Panel de control';
-
-    document.getElementById('logout-btn').addEventListener('click', clearSession);
-
-    // Aplicar visibilidad según rol
-    applyRoleVisibility();
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.ha').forEach((el, i) => {
+      setTimeout(() => io.observe(el), i * 30);
+    });
 
     async function loadEquipos() {
       const data = await apiFetch('/equipos');
@@ -178,26 +160,22 @@
       }
     }
 
-    loadEquipos();
-    loadLigas();
+    if (loggedIn) { loadEquipos(); loadLigas(); }
 
-    document.getElementById('welcome-card').addEventListener('click', () => window.location.href = '/profile.html');
-    document.getElementById('btn-mi-club').addEventListener('click', () => window.location.href = '/club.html');
+    document.getElementById('welcome-card').addEventListener('click', () => window.location.href = loggedIn ? '/profile.html' : '/login.html');
+    document.getElementById('btn-mi-club').addEventListener('click',  () => window.location.href = '/club.html');
+    document.getElementById('btn-ligas').addEventListener('click',    () => window.location.href = '/ligas.html');
+    document.getElementById('btn-perfil').addEventListener('click',   () => window.location.href = loggedIn ? '/profile.html' : '/login.html');
 
-    const crearBtn = document.getElementById('btn-crear-club');
-    if (crearBtn) crearBtn.addEventListener('click', () => window.location.href = '/crear-club.html');
-
-    const importarBtn = document.getElementById('btn-importar-club');
-    if (importarBtn) importarBtn.addEventListener('click', () => window.location.href = '/import-club.html');
-
-    document.getElementById('btn-ligas').addEventListener('click', () => window.location.href = '/ligas.html');
-    document.getElementById('btn-perfil').addEventListener('click', () => window.location.href = '/profile.html');
-
+    const crearBtn      = document.getElementById('btn-crear-club');
+    const importarBtn   = document.getElementById('btn-importar-club');
     const importLigaBtn = document.getElementById('btn-importar-liga');
-    if (importLigaBtn) importLigaBtn.addEventListener('click', () => window.location.href = '/import-liga.html');
+    const usuariosBtn   = document.getElementById('btn-usuarios');
 
-    const usuariosBtn = document.getElementById('btn-usuarios');
-    if (usuariosBtn) usuariosBtn.addEventListener('click', () => window.location.href = '/usuarios.html');
+    if (crearBtn)      crearBtn.addEventListener('click',      () => window.location.href = '/import-club.html');
+    if (importarBtn)   importarBtn.addEventListener('click',   () => window.location.href = '/import-club.html');
+    if (importLigaBtn) importLigaBtn.addEventListener('click', () => window.location.href = '/import-liga.html');
+    if (usuariosBtn)   usuariosBtn.addEventListener('click',   () => window.location.href = '/usuarios.html');
   </script>
 
 </body>
