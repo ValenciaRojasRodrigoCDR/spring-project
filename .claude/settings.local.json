@@ -65,7 +65,8 @@
       "Bash('/c/Program Files/BlueStacks_nxt/ffmpeg.exe' -i /c/Users/rodri/OneDrive/Desktop/claude/spring-project/src/main/resources/static/uploads/transicion.webm)",
       "Bash(mvn -q test)",
       "Bash(mvn -q clean install -DskipTests)",
-      "Bash(taskkill *)"
+      "Bash(taskkill *)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
