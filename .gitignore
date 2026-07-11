@@ -22,5 +22,5 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Uploads
-uploads/
+# Uploads (runtime player photos at project root only)
+/uploads/
