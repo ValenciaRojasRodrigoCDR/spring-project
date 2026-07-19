@@ -1,0 +1,15 @@
+- generic [ref=f10e3]:
+  - img [ref=f10e5]:
+    - generic [ref=f10e8]: 4M
+    - generic [ref=f10e9]: DRINK TEAM
+  - generic [ref=f10e10]: Iniciar sesión
+  - generic [ref=f10e11]:
+    - generic [ref=f10e12]:
+      - generic [ref=f10e13]: Usuario
+      - textbox "Introduce tu usuario" [ref=f10e14]
+    - generic [ref=f10e15]:
+      - generic [ref=f10e16]: Contraseña
+      - textbox "Introduce tu contraseña" [ref=f10e17]
+    - button "Entrar" [ref=f10e19] [cursor=pointer]
+  - generic [ref=f10e20]: o continúa con
+  - button "Iniciar sesión con Google" [ref=f10e22] [cursor=pointer]

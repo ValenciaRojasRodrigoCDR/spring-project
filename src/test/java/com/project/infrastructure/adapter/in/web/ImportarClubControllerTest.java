@@ -1,11 +1,10 @@
 package com.project.infrastructure.adapter.in.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.application.port.in.GetUserQuery;
 import com.project.application.service.AsyncImportarClubService;
-import com.project.domain.model.User;
 import com.project.infrastructure.adapter.in.web.dto.ImportarClubRequest;
 import com.project.infrastructure.store.ImportJobStore;
+import com.project.infrastructure.config.AuthDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ImportarClubControllerTest {
 
     @Mock AsyncImportarClubService asyncImportarClubService;
-    @Mock GetUserQuery getUserQuery;
     @Mock ImportJobStore importJobStore;
     @InjectMocks ImportarClubController importarClubController;
 
@@ -44,15 +42,13 @@ class ImportarClubControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken mockAuth() {
-        return new UsernamePasswordAuthenticationToken("admin", null, List.of());
+        var auth = new UsernamePasswordAuthenticationToken("admin", null, List.of());
+        auth.setDetails(new AuthDetails(1L, null));
+        return auth;
     }
 
     @Test
     void importar_returns202_conJobId() throws Exception {
-        User user = User.builder().id(1L).username("admin").password("p")
-                .role("ADMIN").nombre("A").apellidos("B").email("a@b.com").build();
-
-        when(getUserQuery.getByUsername("admin")).thenReturn(user);
         when(importJobStore.crear()).thenReturn("test-job-id");
 
         ImportarClubRequest request = new ImportarClubRequest("FC", "2024", "L1", "D",

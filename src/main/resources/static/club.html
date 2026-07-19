@@ -118,12 +118,15 @@
       });
     }
 
+    /* Opt-E bis: stale-while-revalidate — pinta la caché al instante pero
+       siempre refresca del servidor, para no quedarse con datos rancios
+       tras crear/importar equipos desde otra página */
     document.addEventListener('DOMContentLoaded', async () => {
       const cached = getCached();
-      if (cached) { renderEquipos(cached); return; }
+      if (cached) renderEquipos(cached);
       const equipos = await apiFetch('/equipos');
-      setCache(equipos);
-      renderEquipos(equipos);
+      if (equipos) { setCache(equipos); renderEquipos(equipos); }
+      else if (!cached) renderEquipos([]);
     });
 
     // ── Modal ──────────────────────────────────────────────────────────────

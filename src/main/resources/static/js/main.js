@@ -362,6 +362,31 @@ async function apiFetch(path, options = {}) {
 }
 
 /* ============================================================
+   PAGINADOR CLIENT-SIDE
+   pagerId = contenedor con botones .pg-prev / .pg-next y un .pg-info
+   renderRows(pageItems, offset) pinta la página; offset = índice global
+   del primer elemento (para rankings continuos entre páginas)
+   ============================================================ */
+function createPager(pagerId, renderRows, pageSize = 25) {
+  const pager = document.getElementById(pagerId);
+  let items = [], page = 0;
+
+  function render() {
+    renderRows(items.slice(page * pageSize, (page + 1) * pageSize), page * pageSize);
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    pager.style.display = totalPages > 1 ? 'flex' : 'none';
+    pager.querySelector('.pg-info').textContent = `Página ${page + 1} de ${totalPages}`;
+    pager.querySelector('.pg-prev').disabled = page === 0;
+    pager.querySelector('.pg-next').disabled = page >= totalPages - 1;
+  }
+
+  pager.querySelector('.pg-prev').addEventListener('click', () => { if (page > 0) { page--; render(); } });
+  pager.querySelector('.pg-next').addEventListener('click', () => { page++; render(); });
+
+  return { setItems(list) { items = list || []; page = 0; render(); } };
+}
+
+/* ============================================================
    INIT — punto de entrada
    Sustituye este bloque por tu lógica de negocio
    ============================================================ */

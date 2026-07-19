@@ -148,6 +148,11 @@
           </tbody>
         </table>
       </div>
+      <div id="partidos-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+        <button class="btn pg-prev">‹</button>
+        <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+        <button class="btn pg-next">›</button>
+      </div>
     </div>
 
   </div>
@@ -219,7 +224,7 @@
 
     const ligaId     = localStorage.getItem('current_liga_id');
     const ligaNombre = localStorage.getItem('current_liga_nombre') || 'Liga';
-    if (!ligaId) window.location.replace('/ligas.html');
+    if (!ligaId) { window.location.replace('/ligas.html'); throw new Error('Liga no seleccionada'); }
 
     document.getElementById('liga-title').textContent = ligaNombre;
 
@@ -245,11 +250,16 @@
       await loadAll();
     }
 
+    /* ponytail: KPIs y clasificación necesitan todos los partidos, así que la tabla
+       se pagina client-side sobre ese mismo fetch; si el volumen crece, mover los
+       agregados a un endpoint del servidor y usar ?page&size (ya soportado por la API) */
+    const partidosPager = createPager('partidos-pager', renderPartidos);
+
     async function loadAll() {
-      const partidos = await apiFetch(`/ligas/${ligaId}/partidos`);
-      renderKpis(partidos || []);
-      renderClasificacion(partidos || []);
-      renderPartidos(partidos || []);
+      const todosPartidos = (await apiFetch(`/ligas/${ligaId}/partidos`)) || [];
+      renderKpis(todosPartidos);
+      renderClasificacion(todosPartidos);
+      partidosPager.setItems(todosPartidos);
     }
 
     function equipoNombre(id) {

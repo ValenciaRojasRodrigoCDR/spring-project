@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App · Crear club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+</head>
+<body>
+
+  <div class="orbs">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+  </div>
+
+  <div class="app">
+
+    <header class="hdr" style="justify-content:space-between;">
+      <button class="btn" id="back-btn">← Volver</button>
+      <div class="logo-txt">Crear club</div>
+      <div style="width:80px;"></div>
+    </header>
+
+    <div class="glass full-panel ha d1" style="max-width:560px;margin:0 auto;">
+      <div class="ptitle">Datos del club</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:18px;">
+        Crea el club con sus datos básicos. Los jugadores se añaden después desde la pantalla "Mi club".
+      </div>
+      <form id="crear-form" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Nombre *</div>
+          <input id="f-nombre" class="input" type="text" required placeholder="Nombre del club" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Temporada *</div>
+          <input id="f-temporada" class="input" type="text" required placeholder="Ej: 2024/25" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Liga</div>
+          <input id="f-liga" class="input" type="text" placeholder="Ej: Primera División" />
+        </div>
+        <div class="profile-field" style="border:none;padding:0;">
+          <div class="profile-lbl">Descripción</div>
+          <textarea id="f-descripcion" class="input" rows="3" placeholder="Descripción opcional" style="resize:vertical;"></textarea>
+        </div>
+        <div id="form-error" style="color:var(--re);font-size:13px;min-height:18px;"></div>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Crear club</button>
+      </form>
+    </div>
+
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+      window.location.href = '/index.html';
+    });
+
+    document.getElementById('crear-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const errEl = document.getElementById('form-error');
+      const btn   = document.getElementById('submit-btn');
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Creando…';
+
+      const equipo = await apiFetch('/equipos', {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre:      document.getElementById('f-nombre').value.trim(),
+          temporada:   document.getElementById('f-temporada').value.trim(),
+          liga:        document.getElementById('f-liga').value.trim()        || null,
+          descripcion: document.getElementById('f-descripcion').value.trim() || null,
+        })
+      });
+
+      if (!equipo) {
+        errEl.textContent = 'No se pudo crear el club.';
+        btn.disabled = false;
+        btn.textContent = 'Crear club';
+        return;
+      }
+      window.location.href = '/club.html';
+    });
+  </script>
+
+</body>
+</html>

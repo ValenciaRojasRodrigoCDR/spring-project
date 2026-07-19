@@ -35,7 +35,7 @@ class LigaPersistenceAdapterTest {
     @Test
     void save_persistsAndReturnsMappedDomain() {
         LigaEntity saved = buildEntity();
-        when(ligaJpaRepository.saveAndFlush(any())).thenReturn(saved);
+        when(ligaJpaRepository.save(any())).thenReturn(saved);
 
         Liga result = adapter.save(buildDomain());
 

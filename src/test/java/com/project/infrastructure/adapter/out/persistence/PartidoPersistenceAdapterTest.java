@@ -36,7 +36,7 @@ class PartidoPersistenceAdapterTest {
 
     @Test
     void save_persistsAndReturnsMappedDomain() {
-        when(jpaRepository.saveAndFlush(any())).thenReturn(buildEntity());
+        when(jpaRepository.save(any())).thenReturn(buildEntity());
 
         Partido result = adapter.save(buildDomain());
 
@@ -85,6 +85,35 @@ class PartidoPersistenceAdapterTest {
     }
 
     @Test
+    void saveAll_persisteLoteYDevuelveMapeados() {
+        when(jpaRepository.saveAll(any())).thenReturn(List.of(buildEntity(), buildEntity()));
+
+        List<Partido> result = adapter.saveAll(List.of(buildDomain(), buildDomain()));
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getRival()).isEqualTo("Real Madrid");
+        verify(jpaRepository).saveAll(any());
+    }
+
+    @Test
+    void findByLigaId_paginado_delegaConPageRequest() {
+        when(jpaRepository.findByLigaId(eq(5L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(List.of(buildEntity()));
+
+        List<Partido> result = adapter.findByLigaId(5L, 0, 25);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getLigaId()).isEqualTo(5L);
+    }
+
+    @Test
+    void countByLigaId_delegaAlRepositorio() {
+        when(jpaRepository.countByLigaId(5L)).thenReturn(100L);
+
+        assertThat(adapter.countByLigaId(5L)).isEqualTo(100L);
+    }
+
+    @Test
     void deleteById_delegatesToRepository() {
         adapter.deleteById(1L);
         verify(jpaRepository).deleteById(1L);
@@ -92,7 +121,7 @@ class PartidoPersistenceAdapterTest {
 
     @Test
     void save_mapsAllFieldsCorrectly() {
-        when(jpaRepository.saveAndFlush(any())).thenReturn(buildEntity());
+        when(jpaRepository.save(any())).thenReturn(buildEntity());
 
         Partido result = adapter.save(buildDomain());
 

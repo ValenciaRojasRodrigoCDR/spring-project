@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,7 +32,7 @@ class AsistenciaPersistenceAdapterTest {
 
     @Test
     void save_persistsAndReturnsMappedDomain() {
-        when(jpaRepository.saveAndFlush(any())).thenReturn(buildEntity());
+        when(jpaRepository.save(any())).thenReturn(buildEntity());
 
         Asistencia result = adapter.save(buildDomain());
 
@@ -55,10 +56,10 @@ class AsistenciaPersistenceAdapterTest {
     }
 
     @Test
-    void findByJugadorId_returnsMappedList() {
-        when(jpaRepository.findByJugadorId(5L)).thenReturn(List.of(buildEntity()));
+    void saveAll_persistsBatchAndReturnsMappedList() {
+        when(jpaRepository.saveAllAndFlush(anyList())).thenReturn(List.of(buildEntity()));
 
-        List<Asistencia> result = adapter.findByJugadorId(5L);
+        List<Asistencia> result = adapter.saveAll(List.of(buildDomain()));
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getJugadorId()).isEqualTo(5L);
@@ -74,7 +75,7 @@ class AsistenciaPersistenceAdapterTest {
     void save_withNotAsistioAndNotTitular_mapsCorrectly() {
         AsistenciaEntity entity = AsistenciaEntity.builder().id(2L).partidoId(10L).jugadorId(7L)
                 .asistio(false).goles(0).minutos(0).titular(false).build();
-        when(jpaRepository.saveAndFlush(any())).thenReturn(entity);
+        when(jpaRepository.save(any())).thenReturn(entity);
 
         Asistencia a = Asistencia.builder().partidoId(10L).jugadorId(7L)
                 .asistio(false).goles(0).minutos(0).titular(false).build();

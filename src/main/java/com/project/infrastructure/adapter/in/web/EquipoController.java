@@ -4,12 +4,12 @@ import com.project.application.port.in.CreateEquipoUseCase;
 import com.project.application.port.in.GetEquiposQuery;
 import com.project.application.port.in.GetEstadisticasAvanzadasQuery;
 import com.project.application.port.in.GetJugadoresQuery;
-import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.UpdateEquipoUseCase;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
 import com.project.infrastructure.adapter.in.web.dto.EquipoResponse;
 import com.project.infrastructure.adapter.in.web.dto.EstadisticasAvanzadasResponse;
 import com.project.infrastructure.adapter.in.web.dto.JugadorResponse;
+import com.project.infrastructure.adapter.in.web.dto.PageResponse;
 import com.project.infrastructure.adapter.in.web.dto.UpdateEquipoRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +28,12 @@ public class EquipoController {
     private final CreateEquipoUseCase            createEquipoUseCase;
     private final UpdateEquipoUseCase            updateEquipoUseCase;
     private final GetEquiposQuery                getEquiposQuery;
-    private final GetUserQuery                   getUserQuery;
     private final GetJugadoresQuery              getJugadoresQuery;
     private final GetEstadisticasAvanzadasQuery  getEstadisticasAvanzadasQuery;
 
     @GetMapping
     public ResponseEntity<List<EquipoResponse>> list(Authentication authentication) {
-        Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
+        Long userId = CurrentUser.userId(authentication);
         List<EquipoResponse> equipos = getEquiposQuery.getByUserId(userId)
                 .stream().map(this::toResponse).toList();
         return ResponseEntity.ok(equipos);
@@ -43,7 +42,7 @@ public class EquipoController {
     @PostMapping
     public ResponseEntity<EquipoResponse> create(@Valid @RequestBody CreateEquipoRequest request,
                                                  Authentication authentication) {
-        Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
+        Long userId = CurrentUser.userId(authentication);
         var equipo = createEquipoUseCase.create(new CreateEquipoUseCase.CreateEquipoCommand(
                 request.nombre(), request.temporada(), request.liga(), request.descripcion(), userId));
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(equipo));
@@ -53,20 +52,30 @@ public class EquipoController {
     public ResponseEntity<EquipoResponse> update(@PathVariable Long id,
                                                  @Valid @RequestBody UpdateEquipoRequest request,
                                                  Authentication authentication) {
-        Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
+        Long userId = CurrentUser.userId(authentication);
         var equipo = updateEquipoUseCase.update(new UpdateEquipoUseCase.UpdateEquipoCommand(
                 id, request.nombre(), request.temporada(), request.liga(), request.descripcion(), userId));
         return ResponseEntity.ok(toResponse(equipo));
     }
 
     @GetMapping("/{id}/jugadores")
-    public ResponseEntity<List<JugadorResponse>> jugadores(@PathVariable Long id) {
-        List<JugadorResponse> jugadores = getJugadoresQuery.getByEquipoId(id)
-                .stream().map(j -> new JugadorResponse(
-                        j.getId(), j.getNombre(), j.getPosicion(), j.getDorsal(), j.getEdad(),
-                        j.getTotalGoals(), j.getPartidosJugados(), j.getGolPorPartido(), j.getFotoUrl()))
-                .toList();
-        return ResponseEntity.ok(jugadores);
+    public ResponseEntity<?> jugadores(@PathVariable Long id,
+                                       @RequestParam(required = false) Integer page,
+                                       @RequestParam(defaultValue = "25") int size) {
+        if (page == null) {
+            return ResponseEntity.ok(getJugadoresQuery.getByEquipoId(id)
+                    .stream().map(this::toJugadorResponse).toList());
+        }
+        var result = getJugadoresQuery.getByEquipoId(id, page, size);
+        return ResponseEntity.ok(PageResponse.of(
+                result.content().stream().map(this::toJugadorResponse).toList(),
+                page, size, result.totalElements()));
+    }
+
+    private JugadorResponse toJugadorResponse(com.project.domain.model.Jugador j) {
+        return new JugadorResponse(j.getId(), j.getNombre(), j.getPosicion(), j.getDorsal(),
+                j.getEdad(), j.getTotalGoals(), j.getPartidosJugados(), j.getGolPorPartido(),
+                j.getFotoUrl());
     }
 
     @GetMapping("/{id}/estadisticas-avanzadas")

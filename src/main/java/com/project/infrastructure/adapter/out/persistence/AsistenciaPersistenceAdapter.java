@@ -16,17 +16,19 @@ public class AsistenciaPersistenceAdapter implements AsistenciaRepository {
 
     @Override
     public Asistencia save(Asistencia asistencia) {
-        return toDomain(jpaRepository.saveAndFlush(toEntity(asistencia)));
+        return toDomain(jpaRepository.save(toEntity(asistencia)));
+    }
+
+    @Override
+    public List<Asistencia> saveAll(List<Asistencia> asistencias) {
+        // flush único al final del lote: las filas quedan visibles para el recálculo JDBC en la misma tx
+        return jpaRepository.saveAllAndFlush(asistencias.stream().map(this::toEntity).toList())
+                .stream().map(this::toDomain).toList();
     }
 
     @Override
     public List<Asistencia> findByPartidoId(Long partidoId) {
         return jpaRepository.findByPartidoId(partidoId).stream().map(this::toDomain).toList();
-    }
-
-    @Override
-    public List<Asistencia> findByJugadorId(Long jugadorId) {
-        return jpaRepository.findByJugadorId(jugadorId).stream().map(this::toDomain).toList();
     }
 
     @Override

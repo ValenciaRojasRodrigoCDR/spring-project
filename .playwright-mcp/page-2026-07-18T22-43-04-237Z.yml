@@ -1,0 +1,21 @@
+- generic [ref=f3e2]:
+  - banner [ref=f3e3]:
+    - button "← Volver" [ref=f3e4] [cursor=pointer]
+    - generic [ref=f3e5]: Crear club
+  - generic [ref=f3e6]:
+    - generic [ref=f3e7]: Datos del club
+    - generic [ref=f3e8]: Crea el club con sus datos básicos. Los jugadores se añaden después desde la pantalla "Mi club".
+    - generic [ref=f3e9]:
+      - generic [ref=f3e10]:
+        - generic [ref=f3e11]: Nombre *
+        - textbox "Nombre del club" [ref=f3e12]
+      - generic [ref=f3e13]:
+        - generic [ref=f3e14]: Temporada *
+        - 'textbox "Ej: 2024/25" [ref=f3e15]'
+      - generic [ref=f3e16]:
+        - generic [ref=f3e17]: Liga
+        - 'textbox "Ej: Primera División" [ref=f3e18]'
+      - generic [ref=f3e19]:
+        - generic [ref=f3e20]: Descripción
+        - textbox "Descripción opcional" [ref=f3e21]
+      - button "Crear club" [ref=f3e23] [cursor=pointer]

@@ -4,7 +4,6 @@ import com.project.application.port.in.AddEquipoToLigaUseCase;
 import com.project.application.port.in.CreateLigaUseCase;
 import com.project.application.port.in.DeleteLigaUseCase;
 import com.project.application.port.in.GetLigasQuery;
-import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.UpdateLigaUseCase;
 import com.project.domain.model.Liga;
 import com.project.infrastructure.adapter.in.web.dto.CreateLigaRequest;
@@ -18,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ligas")
@@ -29,14 +29,16 @@ public class LigaController {
     private final DeleteLigaUseCase     deleteLigaUseCase;
     private final GetLigasQuery         getLigasQuery;
     private final AddEquipoToLigaUseCase addEquipoToLigaUseCase;
-    private final GetUserQuery          getUserQuery;
 
     @GetMapping
     public ResponseEntity<List<LigaResponse>> list(Authentication authentication) {
         Long userId = resolveUserId(authentication);
-        List<LigaResponse> ligas = getLigasQuery.getByUserId(userId)
-                .stream().map(l -> toResponse(l, addEquipoToLigaUseCase.getEquipoIds(l.getId()))).toList();
-        return ResponseEntity.ok(ligas);
+        List<Liga> ligas = getLigasQuery.getByUserId(userId);
+        Map<Long, List<Long>> equipoIdsPorLiga = addEquipoToLigaUseCase.getEquipoIdsByLigaIds(
+                ligas.stream().map(Liga::getId).toList());
+        return ResponseEntity.ok(ligas.stream()
+                .map(l -> toResponse(l, equipoIdsPorLiga.getOrDefault(l.getId(), List.of())))
+                .toList());
     }
 
     @GetMapping("/{id}")
@@ -95,7 +97,7 @@ public class LigaController {
     }
 
     private Long resolveUserId(Authentication authentication) {
-        return getUserQuery.getByUsername(authentication.getName()).getId();
+        return CurrentUser.userId(authentication);
     }
 
     private LigaResponse toResponse(Liga l, List<Long> equipoIds) {

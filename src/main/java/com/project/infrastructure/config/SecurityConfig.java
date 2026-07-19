@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(
                                 "/", "/login.html", "/index.html", "/profile.html",
-                                "/import-club.html", "/club.html", "/estadisticas.html",
+                                "/import-club.html", "/crear-club.html", "/club.html", "/estadisticas.html",
                                 "/estadisticas-avanzadas.html",
                                 "/jugadores.html", "/editar-jugador.html",
                                 "/ligas.html", "/partidos.html", "/import-liga.html",

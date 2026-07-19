@@ -3,6 +3,8 @@ package com.project.infrastructure.adapter.out.persistence;
 import com.project.application.port.out.PartidoRepository;
 import com.project.domain.model.Partido;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,7 +18,13 @@ public class PartidoPersistenceAdapter implements PartidoRepository {
 
     @Override
     public Partido save(Partido partido) {
-        return toDomain(jpaRepository.saveAndFlush(toEntity(partido)));
+        return toDomain(jpaRepository.save(toEntity(partido)));
+    }
+
+    @Override
+    public List<Partido> saveAll(List<Partido> partidos) {
+        return jpaRepository.saveAll(partidos.stream().map(this::toEntity).toList())
+                .stream().map(this::toDomain).toList();
     }
 
     @Override
@@ -25,8 +33,24 @@ public class PartidoPersistenceAdapter implements PartidoRepository {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return jpaRepository.existsById(id);
+    }
+
+    @Override
     public List<Partido> findByLigaId(Long ligaId) {
         return jpaRepository.findByLigaId(ligaId).stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Partido> findByLigaId(Long ligaId, int page, int size) {
+        return jpaRepository.findByLigaId(ligaId, PageRequest.of(page, size, Sort.by("id")))
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public long countByLigaId(Long ligaId) {
+        return jpaRepository.countByLigaId(ligaId);
     }
 
     @Override

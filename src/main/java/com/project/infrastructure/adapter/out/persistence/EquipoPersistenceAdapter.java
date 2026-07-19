@@ -16,6 +16,7 @@ public class EquipoPersistenceAdapter implements EquipoRepository {
 
     @Override
     public Equipo save(Equipo equipo) {
+        // flush necesario: el batch JDBC de jugadores en ImportarClubService referencia esta fila por FK dentro de la misma tx
         return toDomain(jpaRepository.saveAndFlush(toEntity(equipo)));
     }
 

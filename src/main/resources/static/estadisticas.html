@@ -70,6 +70,11 @@
           <tbody id="tabla-goleadores"></tbody>
         </table>
       </div>
+      <div id="goleadores-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+        <button class="btn pg-prev">‹</button>
+        <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+        <button class="btn pg-next">›</button>
+      </div>
     </div>
 
     <!-- CLASIFICACIÓN PARTIDOS JUGADOS -->
@@ -88,6 +93,11 @@
           </thead>
           <tbody id="tabla-partidos"></tbody>
         </table>
+      </div>
+      <div id="partidos-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+        <button class="btn pg-prev">‹</button>
+        <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+        <button class="btn pg-next">›</button>
       </div>
     </div>
 
@@ -146,35 +156,37 @@
       document.getElementById('kpi-max-partidos').textContent        = topPartidos.partidosJugados;
       document.getElementById('kpi-max-partidos-nombre').textContent = topPartidos.nombre;
 
-      // Tabla goleadores
-      const porGoles = [...jugadores].sort((a, b) => b.totalGoals - a.totalGoals);
-      const tbodyG   = document.getElementById('tabla-goleadores');
-      porGoles.forEach((j, i) => {
-        const rank = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="rnk ${rank}">${i + 1}</span></td>
+      // Tabla goleadores — paginada
+      goleadoresPager.setItems([...jugadores].sort((a, b) => b.totalGoals - a.totalGoals));
+
+      // Tabla partidos jugados — paginada
+      partidosPager.setItems([...jugadores].sort((a, b) => b.partidosJugados - a.partidosJugados));
+    });
+
+    function rankClass(idx) {
+      return idx === 0 ? 'rnk-primary' : idx < 3 ? 'rnk-secondary' : 'rnk-neutral';
+    }
+
+    const goleadoresPager = createPager('goleadores-pager', (pageItems, offset) => {
+      document.getElementById('tabla-goleadores').innerHTML = pageItems.map((j, i) => `
+        <tr>
+          <td><span class="rnk ${rankClass(offset + i)}">${offset + i + 1}</span></td>
           <td>${j.nombre}</td>
           <td class="tr pts-cell">${j.totalGoals}</td>
           <td class="tr">${j.partidosJugados}</td>
-          <td class="tr">${j.golPorPartido?.toFixed(2) ?? '—'}</td>`;
-        tbodyG.appendChild(tr);
-      });
+          <td class="tr">${j.golPorPartido?.toFixed(2) ?? '—'}</td>
+        </tr>`).join('');
+    });
 
-      // Tabla partidos jugados
-      const porPartidos = [...jugadores].sort((a, b) => b.partidosJugados - a.partidosJugados);
-      const tbodyP      = document.getElementById('tabla-partidos');
-      porPartidos.forEach((j, i) => {
-        const rank = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="rnk ${rank}">${i + 1}</span></td>
+    const partidosPager = createPager('partidos-pager', (pageItems, offset) => {
+      document.getElementById('tabla-partidos').innerHTML = pageItems.map((j, i) => `
+        <tr>
+          <td><span class="rnk ${rankClass(offset + i)}">${offset + i + 1}</span></td>
           <td>${j.nombre}</td>
           <td class="tr pts-cell">${j.partidosJugados}</td>
           <td class="tr">${j.totalGoals}</td>
-          <td class="tr">${j.golPorPartido?.toFixed(2) ?? '—'}</td>`;
-        tbodyP.appendChild(tr);
-      });
+          <td class="tr">${j.golPorPartido?.toFixed(2) ?? '—'}</td>
+        </tr>`).join('');
     });
   </script>
 

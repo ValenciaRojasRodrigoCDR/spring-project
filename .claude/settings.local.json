@@ -66,7 +66,29 @@
       "Bash(mvn -q test)",
       "Bash(mvn -q clean install -DskipTests)",
       "Bash(taskkill *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "PowerShell(ConvertTo-Json *)",
+      "PowerShell(if \\($env:GITHUB_MCP_PAT\\) { 'GITHUB_MCP_PAT: definida' } else { $u = [Environment]::GetEnvironmentVariable\\('GITHUB_MCP_PAT','User'\\); if \\($u\\) { 'GITHUB_MCP_PAT: definida \\(User\\)' } else { 'GITHUB_MCP_PAT: NO definida' } })",
+      "WebSearch",
+      "WebFetch(domain:pypi.org)",
+      "PowerShell(pip *)",
+      "PowerShell(py *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(winget install *)",
+      "PowerShell(graphify *)",
+      "PowerShell(graphify extract *)",
+      "Bash(\"/c/Users/EM2024007510/AppData/Local/Programs/Python/Python312/python.exe\" -m graphify.serve graphify-out/graph.json)",
+      "PowerShell($p = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue; if \\($p\\) { Stop-Process -Id $p.OwningProcess -Force -Confirm:$false; \"Servidor detenido \\(PID $\\($p.OwningProcess\\)\\)\" } else { \"No hay servidor en el puerto 3000\" })",
+      "PowerShell(& \"C:\\\\Users\\\\EM2024007510\\\\AppData\\\\Local\\\\Programs\\\\apache-maven-3.9.9\\\\bin\\\\mvn.cmd\" spring-boot:run \"-Dspring.profiles.active=local\")",
+      "PowerShell($deadline = \\(Get-Date\\).AddSeconds\\(90\\); do { Start-Sleep -Seconds 3; try { $r = Invoke-RestMethod -Uri http://localhost:3000/api/auth/login -Method Post -ContentType 'application/json' -Body '{\"username\":\"admin\",\"password\":\"changeme\"}' -TimeoutSec 3; break } catch { $r = $null } } while \\(\\(Get-Date\\) -lt $deadline\\); if \\($r\\) { \"LOGIN OK\"; $token = $r.token; $r | ConvertTo-Json -Depth 3 } else { \"Servidor no responde\" })",
+      "PowerShell($login = Invoke-RestMethod -Uri http://localhost:3000/api/auth/login -Method Post -ContentType 'application/json' -Body '{\"username\":\"admin\",\"password\":\"changeme\"}'; $h = @{ Authorization = \"Bearer $\\($login.token\\)\" }; foreach \\($ep in 'ligas','equipos','jugadores','partidos'\\) { try { $data = Invoke-RestMethod -Uri \"http://localhost:3000/api/$ep\" -Headers $h; $count = @\\($data\\).Count; \"$ep : $count registros\" } catch { \"$ep : error $\\($_.Exception.Response.StatusCode.value__\\)\" } })"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "github",
+    "playwright",
+    "context7",
+    "graphify"
+  ]
 }

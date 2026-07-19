@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import jakarta.validation.Path;
 import java.util.List;
@@ -129,6 +130,18 @@ class GlobalExceptionHandlerTest {
 
         Map<String, String> errors = (Map<String, String>) response.getBody().get("errors");
         assertThat(errors).hasSize(1).containsKey("nombre");
+    }
+
+    @Test
+    void handleTypeMismatch_returns400ConNombreYValor() {
+        MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
+        when(ex.getName()).thenReturn("ligaId");
+        when(ex.getValue()).thenReturn("null");
+
+        ResponseEntity<Map<String, Object>> response = handler.handleTypeMismatch(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().get("error").toString()).contains("ligaId").contains("null");
     }
 
     @Test

@@ -7,7 +7,6 @@ import com.project.application.port.out.JugadorRepository;
 import com.project.application.port.out.PartidoRepository;
 import com.project.domain.exception.PartidoNotFoundException;
 import com.project.domain.model.Asistencia;
-import com.project.domain.model.Jugador;
 import com.project.domain.model.Partido;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +53,29 @@ class PartidoServiceTest {
     }
 
     @Test
+    void createAll_guardaEnLoteYDevuelveLista() {
+        when(partidoRepository.saveAll(any())).thenReturn(List.of(buildPartido(), buildPartido()));
+
+        List<Partido> result = partidoService.createAll(List.of(
+                new CreatePartidoCommand(2L, 3L, "Rival A", LocalDate.of(2024, 5, 10), null, "2-1", 2, 1),
+                new CreatePartidoCommand(2L, 3L, "Rival B", LocalDate.of(2024, 5, 17), null, "0-0", 0, 0)));
+
+        assertThat(result).hasSize(2);
+        verify(partidoRepository).saveAll(any());
+    }
+
+    @Test
+    void getByLigaId_paginado_devuelvePaginaYTotal() {
+        when(partidoRepository.findByLigaId(2L, 0, 25)).thenReturn(List.of(buildPartido()));
+        when(partidoRepository.countByLigaId(2L)).thenReturn(100L);
+
+        var result = partidoService.getByLigaId(2L, 0, 25);
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(100L);
+    }
+
+    @Test
     void getByEquipoId_returnsList() {
         when(partidoRepository.findByEquipoId(3L)).thenReturn(List.of(buildPartido()));
         assertThat(partidoService.getByEquipoId(3L)).hasSize(1);
@@ -73,45 +95,44 @@ class PartidoServiceTest {
     }
 
     @Test
-    void delete_validPartido_deletesAsistenciasAndPartido() {
-        when(partidoRepository.findById(1L)).thenReturn(Optional.of(buildPartido()));
+    void delete_validPartido_deletesAsistenciasAndPartidoAndRecalculates() {
+        when(partidoRepository.existsById(1L)).thenReturn(true);
+        Asistencia previa = Asistencia.builder().partidoId(1L).jugadorId(10L).asistio(true).goles(1).build();
+        when(asistenciaRepository.findByPartidoId(1L)).thenReturn(List.of(previa));
+
         partidoService.delete(1L);
+
         verify(asistenciaRepository).deleteByPartidoId(1L);
         verify(partidoRepository).deleteById(1L);
+        verify(jugadorRepository).actualizarEstadisticas(List.of(10L));
     }
 
     @Test
     void delete_notFound_throws() {
-        when(partidoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(partidoRepository.existsById(99L)).thenReturn(false);
         assertThatThrownBy(() -> partidoService.delete(99L))
                 .isInstanceOf(PartidoNotFoundException.class);
     }
 
     @Test
     void registrar_savesAsistenciasAndRecalculatesStats() {
-        when(partidoRepository.findById(1L)).thenReturn(Optional.of(buildPartido()));
-        when(asistenciaRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        Jugador jugador = Jugador.builder().id(10L).nombre("Leo").posicion("DEL")
-                .dorsal(9).edad(25).equipoId(3L).build();
-        when(jugadorRepository.findById(10L)).thenReturn(Optional.of(jugador));
-
-        Asistencia a1 = Asistencia.builder().jugadorId(10L).asistio(true).goles(2).minutos(90).build();
-        Asistencia a2 = Asistencia.builder().jugadorId(10L).asistio(true).goles(1).minutos(80).build();
-        when(asistenciaRepository.findByJugadorId(10L)).thenReturn(List.of(a1, a2));
-        when(jugadorRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(partidoRepository.existsById(1L)).thenReturn(true);
+        Asistencia previa = Asistencia.builder().partidoId(1L).jugadorId(20L).asistio(true).goles(1).build();
+        when(asistenciaRepository.findByPartidoId(1L)).thenReturn(List.of(previa));
+        when(asistenciaRepository.saveAll(any())).thenAnswer(i -> i.getArgument(0));
 
         List<AsistenciaItem> items = List.of(new AsistenciaItem(10L, true, 2, 90, true));
         List<Asistencia> result = partidoService.registrar(1L, items);
 
         assertThat(result).hasSize(1);
+        assertThat(result.get(0).getJugadorId()).isEqualTo(10L);
         verify(asistenciaRepository).deleteByPartidoId(1L);
-        verify(jugadorRepository).save(argThat(j -> j.getTotalGoals() == 3 && j.getPartidosJugados() == 2));
+        verify(jugadorRepository).actualizarEstadisticas(List.of(20L, 10L));
     }
 
     @Test
     void registrar_partidoNotFound_throws() {
-        when(partidoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(partidoRepository.existsById(99L)).thenReturn(false);
         assertThatThrownBy(() -> partidoService.registrar(99L, List.of()))
                 .isInstanceOf(PartidoNotFoundException.class);
     }

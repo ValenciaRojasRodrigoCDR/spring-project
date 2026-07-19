@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface AsistenciaRepository {
     Asistencia save(Asistencia asistencia);
+    List<Asistencia> saveAll(List<Asistencia> asistencias);
     List<Asistencia> findByPartidoId(Long partidoId);
-    List<Asistencia> findByJugadorId(Long jugadorId);
     void deleteByPartidoId(Long partidoId);
 }

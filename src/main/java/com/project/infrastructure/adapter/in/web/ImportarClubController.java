@@ -1,6 +1,5 @@
 package com.project.infrastructure.adapter.in.web;
 
-import com.project.application.port.in.GetUserQuery;
 import com.project.application.port.in.ImportarClubUseCase;
 import com.project.application.service.AsyncImportarClubService;
 import com.project.infrastructure.adapter.in.web.dto.ImportarClubRequest;
@@ -22,13 +21,12 @@ import java.util.Map;
 public class ImportarClubController {
 
     private final AsyncImportarClubService asyncImportarClubService;
-    private final GetUserQuery getUserQuery;
     private final ImportJobStore importJobStore;
 
     @PostMapping("/importar")
     public ResponseEntity<Map<String, String>> importar(@Valid @RequestBody ImportarClubRequest request,
                                                         Authentication authentication) {
-        Long userId = getUserQuery.getByUsername(authentication.getName()).getId();
+        Long userId = CurrentUser.userId(authentication);
 
         List<ImportarClubUseCase.JugadorData> jugadores = request.jugadores().stream()
                 .map(j -> new ImportarClubUseCase.JugadorData(

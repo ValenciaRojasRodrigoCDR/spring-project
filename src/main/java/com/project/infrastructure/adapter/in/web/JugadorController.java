@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -110,11 +109,7 @@ public class JugadorController {
     }
 
     private Long extractJugadorId(Authentication auth) {
-        if (auth instanceof UsernamePasswordAuthenticationToken token) {
-            Object details = token.getDetails();
-            return details instanceof Long ? (Long) details : null;
-        }
-        return null;
+        return CurrentUser.jugadorId(auth);
     }
 
     private MediaType resolveMediaType(String filename) {

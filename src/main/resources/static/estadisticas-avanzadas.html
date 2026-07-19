@@ -342,6 +342,11 @@
           <tbody id="tabla-completa"></tbody>
         </table>
       </div>
+      <div id="completa-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+        <button class="btn pg-prev">‹</button>
+        <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+        <button class="btn pg-next">›</button>
+      </div>
     </div>
 
   </div>
@@ -516,18 +521,22 @@
         });
       }
 
-      // ── TABLA COMPLETA ──
-      const maxGol = Math.max(...jugadores.map(j => j.totalGoals), 1);
-      const sorted = [...jugadores].sort((a, b) => b.totalGoals - a.totalGoals);
-      const tbody2 = document.getElementById('tabla-completa');
-      sorted.forEach((j, i) => {
-        const rank    = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
+      // ── TABLA COMPLETA — paginada ──
+      maxGol = Math.max(...jugadores.map(j => j.totalGoals), 1);
+      completaPager.setItems([...jugadores].sort((a, b) => b.totalGoals - a.totalGoals));
+    });
+
+    let maxGol = 1;
+    const completaPager = createPager('completa-pager', (pageItems, offset) => {
+      document.getElementById('tabla-completa').innerHTML = pageItems.map((j, i) => {
+        const idx     = offset + i;
+        const rank    = idx === 0 ? 'rnk-primary' : idx < 3 ? 'rnk-secondary' : 'rnk-neutral';
         const gpp2    = j.golPorPartido ?? 0;
         const sinAno  = Math.max(0, j.partidosJugados - j.totalGoals);
         const effPct  = Math.min(100, Math.round((j.totalGoals / maxGol) * 100));
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="rnk ${rank}">${i + 1}</span></td>
+        return `
+        <tr>
+          <td><span class="rnk ${rank}">${idx + 1}</span></td>
           <td style="font-weight:500">${j.nombre}</td>
           <td><span class="stat-badge badge-bl">${j.posicion || '—'}</span></td>
           <td class="tr">${j.dorsal ?? '—'}</td>
@@ -541,9 +550,9 @@
               <div class="eff-bar-bg"><div class="eff-bar-fill" style="width:${effPct}%"></div></div>
               ${eficienciaBadge(gpp2)}
             </div>
-          </td>`;
-        tbody2.appendChild(tr);
-      });
+          </td>
+        </tr>`;
+      }).join('');
     });
   </script>
 

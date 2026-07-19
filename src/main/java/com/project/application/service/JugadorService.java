@@ -4,6 +4,7 @@ import com.project.application.port.in.CreateJugadorUseCase;
 import com.project.application.port.in.UpdateJugadorUseCase;
 import com.project.application.port.out.FileStoragePort;
 import com.project.application.port.out.JugadorRepository;
+import com.project.domain.exception.JugadorNotFoundException;
 import com.project.domain.model.Jugador;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class JugadorService implements CreateJugadorUseCase, UpdateJugadorUseCas
     @Override
     public Jugador update(UpdateJugadorCommand command) {
         Jugador existing = jugadorRepository.findById(command.id())
-                .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
+                .orElseThrow(() -> new JugadorNotFoundException(command.id()));
 
         String fotoUrl = existing.getFotoUrl();
         if (command.foto() != null && !command.foto().isEmpty()) {

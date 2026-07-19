@@ -86,7 +86,7 @@ class UserPersistenceAdapterTest {
     @Test
     void save_persistsAndReturnsMappedUser() {
         UserEntity saved = buildEntity(5L, "newuser");
-        when(jpaRepository.saveAndFlush(any())).thenReturn(saved);
+        when(jpaRepository.save(any())).thenReturn(saved);
 
         User user = User.builder().username("newuser").password("hashed").role("ROLE_USER")
                 .nombre("New").apellidos("User").email("newuser@b.com").build();
@@ -94,7 +94,7 @@ class UserPersistenceAdapterTest {
 
         assertThat(result.getId()).isEqualTo(5L);
         assertThat(result.getUsername()).isEqualTo("newuser");
-        verify(jpaRepository).saveAndFlush(any());
+        verify(jpaRepository).save(any());
     }
 
     @Test
@@ -102,7 +102,7 @@ class UserPersistenceAdapterTest {
         UserEntity saved = UserEntity.builder().id(3L).username("jugador").password("p")
                 .role("ROLE_JUGADOR").nombre("J").apellidos("G").email("j@j.com")
                 .createdAt(LocalDateTime.now()).jugadorId(42L).build();
-        when(jpaRepository.saveAndFlush(any())).thenReturn(saved);
+        when(jpaRepository.save(any())).thenReturn(saved);
 
         User user = User.builder().username("jugador").password("p").role("ROLE_JUGADOR")
                 .nombre("J").apellidos("G").email("j@j.com").jugadorId(42L).build();

@@ -1,0 +1,8 @@
+- generic [ref=f2e2]:
+  - banner [ref=f2e3]:
+    - button "← Volver" [ref=f2e4] [cursor=pointer]
+    - generic [ref=f2e5]: Mi club
+  - generic [ref=f2e7]:
+    - generic [ref=f2e8]: 🏆
+    - generic [ref=f2e9]: No tienes equipos creados
+    - generic [ref=f2e10]: Cuando crees un equipo aparecerá aquí.

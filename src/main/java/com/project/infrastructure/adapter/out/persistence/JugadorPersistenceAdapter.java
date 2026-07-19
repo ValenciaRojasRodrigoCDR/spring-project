@@ -3,10 +3,15 @@ package com.project.infrastructure.adapter.out.persistence;
 import com.project.application.port.out.JugadorRepository;
 import com.project.domain.model.Jugador;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 // TODO: CONVERSIÓN DE IMÁGENES A WEBP
@@ -73,8 +78,50 @@ public class JugadorPersistenceAdapter implements JugadorRepository {
     }
 
     @Override
+    public List<Jugador> findByEquipoId(Long equipoId, int page, int size) {
+        return jpaRepository.findByEquipoId(equipoId, PageRequest.of(page, size, Sort.by("id")))
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public long countByEquipoId(Long equipoId) {
+        return jpaRepository.countByEquipoId(equipoId);
+    }
+
+    @Override
     public Optional<Jugador> findById(Long id) {
         return jpaRepository.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public void actualizarEstadisticas(List<Long> jugadorIds) {
+        if (jugadorIds.isEmpty()) return;
+
+        Map<Long, int[]> stats = new HashMap<>();
+        jugadorIds.forEach(id -> stats.put(id, new int[]{0, 0}));
+
+        String placeholders = String.join(",", Collections.nCopies(jugadorIds.size(), "?"));
+        jdbcTemplate.query(
+                "SELECT jugador_id, COALESCE(SUM(goles), 0) AS goles, " +
+                "SUM(CASE WHEN asistio THEN 1 ELSE 0 END) AS partidos " +
+                "FROM asistencias WHERE jugador_id IN (" + placeholders + ") GROUP BY jugador_id",
+                rs -> {
+                    stats.put(rs.getLong("jugador_id"),
+                            new int[]{rs.getInt("goles"), rs.getInt("partidos")});
+                },
+                jugadorIds.toArray());
+
+        jdbcTemplate.batchUpdate(
+                "UPDATE jugadores SET total_goals = ?, partidos_jugados = ?, gol_por_partido = ? WHERE id = ?",
+                jugadorIds,
+                jugadorIds.size(),
+                (ps, id) -> {
+                    int[] s = stats.get(id);
+                    ps.setInt(1, s[0]);
+                    ps.setInt(2, s[1]);
+                    ps.setDouble(3, s[1] > 0 ? (double) s[0] / s[1] : 0.0);
+                    ps.setLong(4, id);
+                });
     }
 
     private Jugador toDomain(JugadorEntity e) {

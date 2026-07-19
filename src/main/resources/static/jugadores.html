@@ -9,441 +9,702 @@
   <link rel="stylesheet" href="css/main.css" />
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
   <style>
-    .player-grid {
-      display: flex;
-      flex-direction: row;
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-      overflow-x: auto;
-      padding-bottom: 8px;
+    html, body { height: 100%; overflow: hidden; }
+
+    /* ── FONDO A PANTALLA COMPLETA (imagen de la card seleccionada) ──
+       Dos capas: la imagen COMPLETA (contain, se ve el máximo posible) sobre
+       un relleno difuminado de la misma imagen (cover) que cubre la pantalla. */
+    #fullbg {
+      position: fixed; inset: 0; z-index: 0;
+      transition: opacity 0.45s ease;
+    }
+    #fullbg.fading { opacity: 0; }
+    .bg-fill {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      filter: blur(45px) brightness(0.45); transform: scale(1.12);
+    }
+    .bg-img {
+      position: absolute; inset: 0;
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+    }
+    /* velo para legibilidad del texto */
+    #fullbg::after {
+      content: ''; position: absolute; inset: 0;
+      background:
+        linear-gradient(to top, rgba(3,2,12,0.92) 0%, rgba(3,2,12,0.35) 38%, rgba(3,2,12,0.15) 60%, rgba(3,2,12,0.45) 100%),
+        linear-gradient(to right, rgba(3,2,12,0.55) 0%, transparent 45%);
     }
 
-    .player-grid::-webkit-scrollbar {
-      height: 4px;
+    /* ── CAPAS SOBRE EL FONDO ── */
+    .hdr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+      padding: 18px 24px;
+      background: linear-gradient(to bottom, rgba(3,2,12,0.55), transparent);
+      border: none;
     }
 
-    .player-grid::-webkit-scrollbar-track {
-      background: transparent;
+    /* ── INFO DEL JUGADOR (abajo izquierda) ── */
+    .stage-info {
+      position: fixed; left: 44px; bottom: 48px; z-index: 5;
+      max-width: min(560px, 55vw);
+      animation: infoIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    @keyframes infoIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .stage-info.swap { animation: infoIn 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
 
-    .player-grid::-webkit-scrollbar-thumb {
-      background: var(--pu-brd);
-      border-radius: 2px;
+    .stage-pos {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--pu); margin-bottom: 10px;
     }
-
-    .player-card {
-      flex: 0 0 378px;
-      height: 513px;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.15s, border-color 0.15s;
-      border: 0.5px solid var(--glass-brd);
+    .stage-name {
+      font-size: clamp(36px, 6vw, 68px); font-weight: 700; letter-spacing: -2.5px;
+      line-height: 1.02; margin-bottom: 16px; color: #fff; text-wrap: balance;
+      text-shadow: 0 2px 30px rgba(0,0,0,0.6);
     }
-
-    .player-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(167,139,250,0.5);
-    }
-
-    .player-card.active {
-      border-color: var(--pu);
-      box-shadow: 0 0 20px rgba(167,139,250,0.25);
-    }
-
-    .player-card-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: top center;
-      display: block;
-    }
-
-    .player-card-initials {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #1a1040, #0d0b1e);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 52px;
-      font-weight: 900;
-      color: rgba(167,139,250,0.4);
-    }
-
-    .player-card-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 36px 14px 14px;
-      background: linear-gradient(to top, rgba(5,4,20,0.97) 0%, rgba(5,4,20,0.7) 60%, transparent 100%);
-    }
-
-    .player-card-pos {
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--pu);
-      margin-bottom: 3px;
-    }
-
-    .player-card-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 8px;
-    }
-
-    .player-card-stats {
-      display: flex;
-      gap: 10px;
-    }
-
-    .player-card-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .player-card-stat-val {
-      font-size: 16px;
-      font-weight: 700;
+    .stage-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+    .stage-stats { display: flex; gap: 34px; flex-wrap: wrap; }
+    .stage-stat-val {
+      font-size: 42px; font-weight: 700; letter-spacing: -2px; line-height: 1;
       background: linear-gradient(90deg, #c4b5fd, #93c5fd);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stage-stat-lbl {
+      font-size: 10px; color: rgba(226,232,240,0.55); text-transform: uppercase;
+      letter-spacing: 1px; margin-top: 6px;
     }
 
-    .player-card-stat-lbl {
-      font-size: 8px;
-      color: rgba(226,232,240,0.4);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
+    /* ── BOTÓN EDITAR (arriba, sobre la pantalla) ── */
+    #stage-edit-btn { position: fixed; top: 74px; right: 24px; z-index: 10; }
+
+    /* ── BARAJA DE CARTAS (abajo derecha) ── */
+    /* Cartas con proporción de naipe (5:7), solapadas como una mano de baraja.
+       Se ven 4; con más, el slider desplaza el mazo. */
+    .deck-wrap {
+      position: fixed; right: 24px; bottom: 24px; z-index: 8;
+      display: flex; flex-direction: column; gap: 10px; align-items: stretch;
+    }
+    .deck-viewport {
+      width: 370px;           /* 100 + 3×90 = 4 cartas visibles */
+      overflow: hidden; padding: 14px 0 2px;
+    }
+    .deck-track {
+      display: flex; will-change: transform;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .mini-card {
+      flex: 0 0 100px; height: 140px; border-radius: 10px;
+      overflow: hidden; position: relative; cursor: pointer;
+      border: 0.5px solid rgba(255,255,255,0.18);
+      background: rgba(10,8,24,0.6); backdrop-filter: blur(6px);
+      box-shadow: -6px 8px 24px -8px rgba(0,0,0,0.8);
+      transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s, z-index 0s;
+    }
+    .mini-card + .mini-card { margin-left: -10px; }   /* solape de baraja */
+    .mini-card:hover { transform: translateY(-8px); border-color: rgba(167,139,250,0.6); z-index: 2; }
+
+    /* ── MAZO DE CARTAS: dos fases ──
+       Salida: la carta vuela al CENTRO de la pantalla, y desde ahí se expande
+       y se funde con el fondo. Retorno: la anterior aparece en el centro,
+       encoge y se guarda en su hueco de la baraja. */
+    .card-zoom {
+      position: fixed; z-index: 9; pointer-events: none;
+      background-size: cover; background-position: center 15%;
+      border-radius: 10px; border: 0.5px solid rgba(255,255,255,0.2);
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8);
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+    }
+    .card-zoom.expand { transition-duration: 0.5s; }
+
+    @keyframes cardReturn {
+      0%   { transform: translate(var(--dx), var(--dy)) scale(2.8); opacity: 0; }
+      20%  { opacity: 1; }
+      55%  { transform: translate(var(--dx), var(--dy)) scale(2.8); opacity: 1; }
+      100% { transform: none; opacity: 1; }
+    }
+    .mini-card.return-in {
+      animation: cardReturn 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      z-index: 4;
+    }
+    .mini-card img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+    .mini-initials {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 700; color: rgba(167,139,250,0.45);
+      background: linear-gradient(135deg, #1a1040, #0d0b1e);
+    }
+    .mini-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 8px 6px;
+      background: linear-gradient(to top, rgba(5,4,20,0.95), transparent);
+    }
+    .mini-name {
+      font-size: 10.5px; font-weight: 700; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .mini-pos { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--pu); }
+    .mini-dorsal {
+      position: absolute; top: 5px; right: 5px; font-size: 9px; font-weight: 700;
+      padding: 1px 6px; border-radius: 20px; background: rgba(96,165,250,0.3);
+      color: #bfdbfe; border: 0.5px solid rgba(96,165,250,0.4);
     }
 
-    .player-card-dorsal {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-      background: rgba(96,165,250,0.2);
-      color: #93c5fd;
-      border: 0.5px solid rgba(96,165,250,0.4);
-      backdrop-filter: blur(4px);
+    /* ── EDICIÓN INLINE (panel glass sobre la info) ── */
+    .stage-form {
+      display: none; flex-direction: column; gap: 12px;
+      padding: 22px; border-radius: 16px; width: min(420px, 90vw);
+      background: rgba(10,8,24,0.78); backdrop-filter: blur(16px);
+      border: 0.5px solid rgba(255,255,255,0.14);
     }
-
-    .player-stat-lbl {
-      font-size: 9px;
-      color: var(--txt3);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-top: 3px;
+    .stage-info.editing .stage-view { display: none; }
+    .stage-info.editing .stage-form { display: flex; }
+    .stage-form .form-lbl {
+      font-size: 10px; font-weight: 500; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; display: block;
     }
+    .stage-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stage-form-actions { display: flex; gap: 8px; margin-top: 6px; }
 
-    /* Form panel */
-    .form-panel {
-      padding: 20px;
-      margin-bottom: var(--gap);
+    .foto-edit-wrap { display: flex; align-items: center; gap: 12px; }
+    .foto-edit-preview {
+      width: 52px; height: 52px; border-radius: 50%; overflow: hidden;
+      background: var(--glass); border: 0.5px solid var(--glass-brd);
+      display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
     }
+    .foto-edit-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .form-field.full { grid-column: 1 / -1; }
-
-    .form-lbl {
-      font-size: 10px;
-      font-weight: 500;
-      color: var(--txt3);
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-    }
-
-    .foto-preview-wrap {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .foto-preview {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: var(--glass);
-      border: 0.5px solid var(--glass-brd);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .foto-preview img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .form-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
-    .player-card {
-      cursor: pointer;
-    }
-
-    .player-card:hover {
-      border-color: var(--pu-brd-soft);
-      transform: translateY(-2px);
-      transition: transform 0.15s;
-    }
-
-    .player-card.active {
-      border-color: var(--pu-brd);
-      background: rgba(167,139,250,0.08);
-    }
-
-    /* Detail panel */
-    .detail-panel {
-      padding: 24px;
-      margin-bottom: var(--gap);
-      display: none;
-      animation: slideDown 0.2s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .detail-inner {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .detail-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--pu), var(--bl));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: 700;
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      z-index: 50; padding: 10px 18px; border-radius: 10px; font-size: 13px;
+      background: rgba(15,12,30,0.92); border: 0.5px solid var(--glass-brd);
+      backdrop-filter: blur(10px); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
       color: var(--txt);
-      box-shadow: 0 0 20px var(--pu-glow);
-      overflow: hidden;
-      flex-shrink: 0;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.err { border-color: rgba(248,113,113,0.5); color: #f87171; }
+
+    /* ── FORM AÑADIR (overlay centrado) ── */
+    #form-panel {
+      position: fixed; top: 84px; left: 50%; transform: translateX(-50%);
+      z-index: 20; width: min(560px, 92vw); padding: 20px;
+      background: rgba(10,8,24,0.85); backdrop-filter: blur(18px);
+      max-height: calc(100vh - 110px); overflow-y: auto;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-lbl {
+      font-size: 10px; font-weight: 500; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: 0.7px;
+    }
+    .foto-preview-wrap { display: flex; align-items: center; gap: 12px; }
+    .foto-preview {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--glass); border: 0.5px solid var(--glass-brd);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0; overflow: hidden;
+    }
+    .foto-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── VACÍO ── */
+    .empty-state {
+      position: fixed; inset: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: center;
     }
 
-    .detail-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .detail-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .detail-name {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .detail-badges {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .detail-stats {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .detail-stat {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .detail-stat-val {
-      font-size: 22px;
-      font-weight: 700;
-      background: linear-gradient(90deg, var(--pu-light), var(--bl-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
-
-    .detail-stat-lbl {
-      font-size: 9px;
-      color: var(--txt3);
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-    }
-
-    @media (max-width: 600px) {
-      .detail-inner { flex-direction: column; align-items: flex-start; }
-    }
-
-    @media (max-width: 640px) {
-      .form-grid { grid-template-columns: 1fr; }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 720px) {
+      .stage-info { left: 20px; bottom: 190px; max-width: calc(100vw - 40px); }
+      .stage-stats { gap: 22px; }
+      .stage-stat-val { font-size: 32px; }
+      .deck-wrap { right: 20px; }
+      .deck-viewport { width: min(370px, calc(100vw - 40px)); }
+      #stage-edit-btn { top: 66px; right: 16px; }
+      .form-grid, .stage-form-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <div class="orbs">
-    <div class="orb o1"></div>
-    <div class="orb o2"></div>
-    <div class="orb o3"></div>
+  <div id="fullbg">
+    <div class="bg-fill" id="bg-fill"></div>
+    <div class="bg-img" id="bg-img"></div>
   </div>
 
-  <div class="app">
+  <header class="hdr" style="display:flex;justify-content:space-between;align-items:center;">
+    <button class="btn" id="back-btn">← Volver</button>
+    <div class="logo-txt" id="header-title">Jugadores</div>
+    <button class="btn btn-primary" id="toggle-form-btn">+ Añadir</button>
+  </header>
 
-    <header class="hdr" style="justify-content:space-between;">
-      <button class="btn" id="back-btn">← Volver</button>
-      <div class="logo-txt" id="header-title">Jugadores</div>
-      <button class="btn btn-primary" id="toggle-form-btn">+ Añadir</button>
-    </header>
+  <button class="btn btn-primary" id="stage-edit-btn" style="display:none;">✏️ Editar</button>
 
-    <!-- FORM AÑADIR JUGADOR -->
-    <div class="glass form-panel" id="form-panel" style="display:none;">
-      <div class="ptitle">Nuevo jugador</div>
-      <form id="jugador-form">
-        <div class="form-grid">
-          <div class="form-field full">
-            <label class="form-lbl">Nombre *</label>
-            <input class="input" type="text" name="nombre" placeholder="Nombre del jugador" required />
-          </div>
-          <div class="form-field">
-            <label class="form-lbl">Posición</label>
-            <input class="input" type="text" name="posicion" placeholder="Ej: Delantero" />
-          </div>
-          <div class="form-field">
-            <label class="form-lbl">Dorsal</label>
-            <input class="input" type="number" name="dorsal" placeholder="Nº" min="1" max="99" />
-          </div>
-          <div class="form-field">
-            <label class="form-lbl">Edad</label>
-            <input class="input" type="number" name="edad" placeholder="Años" min="1" max="99" />
-          </div>
-          <div class="form-field">
-            <label class="form-lbl">Foto</label>
-            <div class="foto-preview-wrap">
-              <div class="foto-preview" id="foto-preview">📷</div>
-              <input type="file" id="foto-input" name="foto" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
-              <button type="button" class="btn" id="foto-btn">Seleccionar foto</button>
-            </div>
-          </div>
-        </div>
-        <div id="form-error" style="font-size:12px;color:var(--re);min-height:18px;margin-bottom:10px;"></div>
-        <div class="form-actions">
-          <button type="button" class="btn" id="cancel-btn">Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="submit-btn">Guardar jugador</button>
-        </div>
-      </form>
+  <!-- INFO DEL JUGADOR SELECCIONADO -->
+  <div class="stage-info" id="stage-info" style="display:none;">
+    <div class="stage-view">
+      <div class="stage-pos" id="stage-pos"></div>
+      <div class="stage-name" id="stage-name"></div>
+      <div class="stage-badges" id="stage-badges"></div>
+      <div class="stage-stats">
+        <div><div class="stage-stat-val" id="stage-goles">—</div><div class="stage-stat-lbl">Goles</div></div>
+        <div><div class="stage-stat-val" id="stage-partidos">—</div><div class="stage-stat-lbl">Partidos</div></div>
+        <div><div class="stage-stat-val" id="stage-gpp">—</div><div class="stage-stat-lbl">G / Partido</div></div>
+      </div>
     </div>
-
-	<!-- LISTA JUGADORES CON BOTONES LATERALES -->
-	    <div style="display:flex; align-items:center; gap:8px;">
-	      <button class="btn" id="scroll-left-btn" aria-label="Desplazar izquierda"
-	        style="flex-shrink:0; height:48px; width:36px; padding:0; font-size:18px;">&#8592;</button>
-
-	      <div id="content" style="flex:1; min-width:0;"></div>
-
-	      <button class="btn" id="scroll-right-btn" aria-label="Desplazar derecha"
-	        style="flex-shrink:0; height:48px; width:36px; padding:0; font-size:18px;">&#8594;</button>
-	    </div>
-
-    <!-- PANEL DETALLE -->
-    <div class="glass detail-panel" id="detail-panel">
-      <div class="detail-inner">
-        <div class="detail-avatar" id="detail-avatar"></div>
-        <div class="detail-info">
-          <div class="detail-name" id="detail-name"></div>
-          <div class="detail-badges" id="detail-badges"></div>
-          <div class="detail-stats">
-            <div class="detail-stat">
-              <div class="detail-stat-val" id="detail-goles">—</div>
-              <div class="detail-stat-lbl">Goles</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val" id="detail-partidos">—</div>
-              <div class="detail-stat-lbl">Partidos</div>
-            </div>
-            <div class="detail-stat">
-              <div class="detail-stat-val" id="detail-gpp">—</div>
-              <div class="detail-stat-lbl">G / Partido</div>
-            </div>
-          </div>
-          <div style="margin-top:16px;">
-            <button class="btn btn-primary" id="edit-btn">✏️ Editar jugador</button>
+    <form class="stage-form" id="stage-edit-form">
+      <div>
+        <label class="form-lbl">Nombre *</label>
+        <input class="input" type="text" name="nombre" required />
+      </div>
+      <div class="stage-form-row">
+        <div>
+          <label class="form-lbl">Posición</label>
+          <input class="input" type="text" name="posicion" />
+        </div>
+        <div>
+          <label class="form-lbl">Dorsal</label>
+          <input class="input" type="number" name="dorsal" min="1" max="99" />
+        </div>
+      </div>
+      <div class="stage-form-row">
+        <div>
+          <label class="form-lbl">Edad</label>
+          <input class="input" type="number" name="edad" min="1" max="99" />
+        </div>
+        <div>
+          <label class="form-lbl">Foto</label>
+          <div class="foto-edit-wrap">
+            <div class="foto-edit-preview" id="edit-foto-preview">📷</div>
+            <input type="file" id="edit-foto-input" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
+            <button type="button" class="btn" id="edit-foto-btn">Cambiar</button>
           </div>
         </div>
       </div>
-    </div>
-
+      <div class="stage-form-actions">
+        <button type="button" class="btn" id="edit-cancel-btn">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
   </div>
+
+  <!-- BARAJA DE CARTAS (abajo derecha) — rueda del ratón para pasar cartas -->
+  <div class="deck-wrap" id="deck-wrap">
+    <div class="deck-viewport">
+      <div class="deck-track" id="deck"></div>
+    </div>
+    <div id="deck-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:8px;">
+      <button class="btn" id="pg-prev">‹</button>
+      <span id="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+      <button class="btn" id="pg-next">›</button>
+    </div>
+  </div>
+
+  <!-- VACÍO -->
+  <div class="empty-state" id="empty-state" style="display:none;">
+    <div class="glass" style="text-align:center;padding:48px 40px;border-radius:18px;">
+      <div style="font-size:40px;margin-bottom:16px;">👥</div>
+      <div style="font-size:16px;font-weight:600;color:var(--txt);margin-bottom:8px;">Sin jugadores aún</div>
+      <div style="font-size:13px;color:var(--txt2);">Pulsa "+ Añadir" para crear el primer jugador.</div>
+    </div>
+  </div>
+
+  <!-- FORM AÑADIR JUGADOR -->
+  <div class="glass" id="form-panel" style="display:none;">
+    <div class="ptitle">Nuevo jugador</div>
+    <form id="jugador-form">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label class="form-lbl">Nombre *</label>
+          <input class="input" type="text" name="nombre" placeholder="Nombre del jugador" required />
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Posición</label>
+          <input class="input" type="text" name="posicion" placeholder="Ej: Delantero" />
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Dorsal</label>
+          <input class="input" type="number" name="dorsal" placeholder="Nº" min="1" max="99" />
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Edad</label>
+          <input class="input" type="number" name="edad" placeholder="Años" min="1" max="99" />
+        </div>
+        <div class="form-field">
+          <label class="form-lbl">Foto</label>
+          <div class="foto-preview-wrap">
+            <div class="foto-preview" id="foto-preview">📷</div>
+            <input type="file" id="foto-input" name="foto" accept=".jpg,.jpeg,.webp,.png" style="display:none;" />
+            <button type="button" class="btn" id="foto-btn">Seleccionar foto</button>
+          </div>
+        </div>
+      </div>
+      <div id="form-error" style="font-size:12px;color:var(--re);min-height:18px;margin-bottom:10px;"></div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancel-btn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Guardar jugador</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast"></div>
 
   <script src="js/main.js"></script>
   <script>
     if (!localStorage.getItem('jwt_token')) window.location.replace('/login.html');
 
-    const _io = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); _io.unobserve(e.target); } });
-    }, { threshold: 0.08 });
-    document.querySelectorAll('.ha').forEach((el, i) => { setTimeout(() => _io.observe(el), i * 40); });
-
     const params   = new URLSearchParams(window.location.search);
     const equipoId = params.get('equipoId');
     const from     = params.get('from') || 'club';
-
     if (!equipoId) window.location.replace('/club.html');
 
     document.getElementById('back-btn').addEventListener('click', () => {
-      if (from === 'estadisticas') {
-        window.location.href = `/estadisticas.html?equipoId=${equipoId}`;
-      } else {
-        window.location.href = '/club.html';
+      window.location.href = from === 'estadisticas'
+        ? `/estadisticas.html?equipoId=${equipoId}`
+        : '/club.html';
+    });
+
+    // ── ESTADO EN MEMORIA ──
+    // jugadores[] es la única fuente de verdad del front: las ediciones se aplican
+    // aquí al instante y el servidor se sincroniza en segundo plano.
+    let jugadores = [];
+    let selectedId = null;
+    let fotoVersion = {};   // cache-bust por jugador tras cambiar foto
+
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    const initialsOf = n => n.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const fotoSrc = j => `/api/jugadores/${j.id}/foto${fotoVersion[j.id] ? '?v=' + fotoVersion[j.id] : ''}`;
+
+    // ── TOAST ──
+    let toastTimer;
+    function toast(msg, isErr = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = isErr ? 'show err' : 'show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.className = '', 2600);
+    }
+
+    // ── FONDO = IMAGEN DE LA CARD SELECCIONADA ──
+    const GRADIENTS = [
+      'linear-gradient(135deg, #2e1065 0%, #0c0a1d 55%, #172554 100%)',
+      'linear-gradient(135deg, #4a044e 0%, #0c0a1d 55%, #1e1b4b 100%)',
+      'linear-gradient(135deg, #052e16 0%, #0c0a1d 55%, #1e3a8a 100%)',
+      'linear-gradient(135deg, #431407 0%, #0c0a1d 55%, #3b0764 100%)',
+    ];
+    function bgImageOf(j, idx) {
+      return j.fotoUrl ? `url("${fotoSrc(j)}")` : GRADIENTS[idx % GRADIENTS.length];
+    }
+
+    function setBgLayers(j, idx) {
+      const img = bgImageOf(j, idx);
+      document.getElementById('bg-fill').style.backgroundImage = img;
+      // con foto: imagen completa (contain) encima; con gradiente basta el relleno
+      document.getElementById('bg-img').style.backgroundImage = j.fotoUrl ? img : 'none';
+    }
+
+    function updateBackground(j, idx, instant = false) {
+      const bg = document.getElementById('fullbg');
+      if (instant) { setBgLayers(j, idx); return; }
+      bg.classList.add('fading');
+      setTimeout(() => {
+        setBgLayers(j, idx);
+        bg.classList.remove('fading');
+      }, 180);
+    }
+
+    // ── SALIDA EN DOS FASES: al centro de la pantalla → expandir y fundirse ──
+    function centerDelta(rect) {
+      return {
+        dx: window.innerWidth / 2 - (rect.left + rect.width / 2),
+        dy: window.innerHeight / 2 - (rect.top + rect.height / 2)
+      };
+    }
+
+    function zoomFromCard(cardEl, j, idx) {
+      const rect = cardEl.getBoundingClientRect();
+      const { dx, dy } = centerDelta(rect);
+      // escala hasta el tamaño aproximado del background final (encaje contain en el viewport)
+      const scaleFit = Math.min(window.innerWidth / rect.width, window.innerHeight / rect.height);
+      const clone = document.createElement('div');
+      clone.className = 'card-zoom';
+      clone.style.left   = rect.left + 'px';
+      clone.style.top    = rect.top + 'px';
+      clone.style.width  = rect.width + 'px';
+      clone.style.height = rect.height + 'px';
+      clone.style.backgroundImage = bgImageOf(j, idx);
+      document.body.appendChild(clone);
+      // fase 1: vuela al centro y crece
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(2.2)`;
+      }));
+      // fase 2: crece hasta ~el tamaño del background final (el fondo anterior sigue detrás)
+      setTimeout(() => {
+        clone.classList.add('expand');
+        clone.style.transform = `translate(${dx}px, ${dy}px) scale(${scaleFit})`;
+      }, 400);
+      // fase 3: al llegar, el fondo hace crossfade y la carta se desvanece sobre él
+      setTimeout(() => {
+        updateBackground(j, idx);
+        clone.style.opacity = '0';
+      }, 840);
+      setTimeout(() => clone.remove(), 1300);
+    }
+
+    // ── BARAJA (abajo derecha) ──
+    // La carta seleccionada SALE del mazo (se funde con el fondo); al elegir otra,
+    // la anterior vuelve al mazo. Se desplaza con rueda del ratón y con el gesto
+    // horizontal del trackpad.
+    const CARD_STEP = 90;   // ancho de carta (100) − solape (10)
+    const VISIBLE   = 4;
+    let deckOffset  = 0;    // primera carta visible
+    let wheelAcc    = 0;    // acumulador para deltas pequeños de trackpad
+
+    const deckList  = () => jugadores.filter(j => j.id !== selectedId);
+    const maxOffset = () => Math.max(0, deckList().length - VISIBLE);
+
+    function applySlide() {
+      document.getElementById('deck').style.transform =
+        `translateX(${-deckOffset * CARD_STEP}px)`;
+    }
+
+    document.getElementById('deck-wrap').addEventListener('wheel', (e) => {
+      if (maxOffset() === 0) return;
+      e.preventDefault();
+      // trackpad horizontal (deltaX) o rueda vertical (deltaY): manda el mayor
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.sign(delta) !== Math.sign(wheelAcc)) wheelAcc = 0;   // cambio de sentido: sin lag
+      wheelAcc += delta;
+      const steps = Math.trunc(wheelAcc / 80);
+      if (steps !== 0) {
+        wheelAcc -= steps * 80;
+        deckOffset = Math.max(0, Math.min(maxOffset(), deckOffset + steps));
+        applySlide();
+      }
+    }, { passive: false });
+
+    function renderDeck() {
+      const deck = document.getElementById('deck');
+      deck.innerHTML = deckList().map(j => `
+        <div class="mini-card" data-id="${j.id}">
+          ${j.fotoUrl
+            ? `<img src="${fotoSrc(j)}" alt="${esc(j.nombre)}" loading="lazy" />`
+            : `<div class="mini-initials">${esc(initialsOf(j.nombre))}</div>`}
+          ${j.dorsal ? `<div class="mini-dorsal">#${j.dorsal}</div>` : ''}
+          <div class="mini-overlay">
+            <div class="mini-pos">${esc(j.posicion || 'Jugador')}</div>
+            <div class="mini-name">${esc(j.nombre)}</div>
+          </div>
+        </div>`).join('');
+
+      deck.querySelectorAll('.mini-card').forEach(card => {
+        card.addEventListener('click', () => select(Number(card.dataset.id), true, card));
+      });
+
+      deckOffset = Math.min(deckOffset, maxOffset());
+      applySlide();
+    }
+
+    // ── INFO DEL JUGADOR ──
+    function renderStage(animate = true, instantBg = false, skipBg = false) {
+      const j = jugadores.find(x => x.id === selectedId);
+      const info = document.getElementById('stage-info');
+      const editBtn = document.getElementById('stage-edit-btn');
+      if (!j) { info.style.display = 'none'; editBtn.style.display = 'none'; return; }
+      info.style.display = 'block';
+      editBtn.style.display = 'inline-flex';
+
+      const badges = [
+        j.posicion ? `<span class="player-badge">${esc(j.posicion)}</span>` : '',
+        j.dorsal   ? `<span class="player-dorsal">#${j.dorsal}</span>` : '',
+        j.edad     ? `<span class="player-edad">${j.edad} años</span>` : '',
+      ].filter(Boolean).join('') || '<span class="player-edad">Sin datos adicionales</span>';
+
+      document.getElementById('stage-pos').textContent  = j.posicion || 'Jugador';
+      document.getElementById('stage-name').textContent = j.nombre;
+      document.getElementById('stage-badges').innerHTML = badges;
+      document.getElementById('stage-goles').textContent    = j.totalGoals;
+      document.getElementById('stage-partidos').textContent = j.partidosJugados;
+      document.getElementById('stage-gpp').textContent      = j.golPorPartido?.toFixed(2) ?? '—';
+
+      info.classList.remove('editing');
+      if (animate) {
+        info.classList.remove('swap');
+        void info.offsetWidth;
+        info.classList.add('swap');
+      }
+      if (!skipBg) updateBackground(j, jugadores.indexOf(j), instantBg);
+    }
+
+    function select(id, animate = true, cardEl = null) {
+      if (id === selectedId) return;
+      const prevId = selectedId;
+      selectedId = id;
+      const idx = jugadores.findIndex(x => x.id === id);
+      if (cardEl) zoomFromCard(cardEl, jugadores[idx], idx);
+
+      // la carta elegida sale del mazo y la anterior vuelve a él
+      renderDeck();
+
+      // desplazar el mazo para que se VEA volver la carta anterior, y animarla
+      const list = deckList();
+      const prevIdx = list.findIndex(x => x.id === prevId);
+      if (prevIdx !== -1) {
+        if (prevIdx < deckOffset) deckOffset = prevIdx;
+        else if (prevIdx > deckOffset + VISIBLE - 1) deckOffset = prevIdx - VISIBLE + 1;
+        applySlide();
+        const prevCard = document.querySelector(`.mini-card[data-id="${prevId}"]`);
+        if (prevCard) {
+          // trayecto inverso: aparece en el centro, encoge y se guarda en su hueco
+          const { dx, dy } = centerDelta(prevCard.getBoundingClientRect());
+          prevCard.style.setProperty('--dx', dx + 'px');
+          prevCard.style.setProperty('--dy', dy + 'px');
+          prevCard.classList.add('return-in');
+          prevCard.addEventListener('animationend', () => prevCard.classList.remove('return-in'), { once: true });
+        }
+      }
+
+      // con animación de carta, el fondo NO cambia aún: lo intercambia zoomFromCard
+      // cuando la carta cubre la pantalla; sin carta (teclado), crossfade normal
+      renderStage(animate, false, !!cardEl);
+    }
+
+    // ── EDICIÓN INLINE CON GUARDADO OPTIMISTA ──
+    // Medido: PUT ≈ 26 ms en local, pero con foto o red real puede superar 0,1 s.
+    // La UI se actualiza SIEMPRE al instante desde memoria y el PUT va en segundo
+    // plano; si falla, se revierte y se avisa.
+    let editFotoFile = null;
+
+    function openEdit() {
+      const j = jugadores.find(x => x.id === selectedId);
+      if (!j) return;
+      const f = document.getElementById('stage-edit-form');
+      f.nombre.value   = j.nombre;
+      f.posicion.value = j.posicion || '';
+      f.dorsal.value   = j.dorsal ?? '';
+      f.edad.value     = j.edad ?? '';
+      editFotoFile = null;
+      document.getElementById('edit-foto-preview').innerHTML = j.fotoUrl
+        ? `<img src="${fotoSrc(j)}" />` : '📷';
+      document.getElementById('stage-info').classList.add('editing');
+    }
+
+    document.getElementById('stage-edit-btn').addEventListener('click', openEdit);
+    document.getElementById('edit-cancel-btn').addEventListener('click', () =>
+      document.getElementById('stage-info').classList.remove('editing'));
+
+    const editFotoInput = document.getElementById('edit-foto-input');
+    document.getElementById('edit-foto-btn').addEventListener('click', () => editFotoInput.click());
+    editFotoInput.addEventListener('change', () => {
+      editFotoFile = editFotoInput.files[0] || null;
+      if (editFotoFile) {
+        document.getElementById('edit-foto-preview').innerHTML =
+          `<img src="${URL.createObjectURL(editFotoFile)}" />`;
       }
     });
 
-    // Toggle form
+    document.getElementById('stage-edit-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = e.target;
+      const j = jugadores.find(x => x.id === selectedId);
+      if (!j || !f.nombre.value.trim()) return;
+
+      const prev = { ...j };
+      const fotoFile = editFotoFile;
+
+      // 1) memoria + UI al instante
+      j.nombre   = f.nombre.value.trim();
+      j.posicion = f.posicion.value.trim() || null;
+      j.dorsal   = f.dorsal.value ? Number(f.dorsal.value) : null;
+      j.edad     = f.edad.value ? Number(f.edad.value) : null;
+      renderDeck();
+      renderStage(false);
+      toast('Guardado ✓');
+
+      // 2) sincronización en segundo plano
+      const data = new FormData();
+      data.append('nombre', j.nombre);
+      if (j.posicion) data.append('posicion', j.posicion);
+      if (j.dorsal != null) data.append('dorsal', j.dorsal);
+      if (j.edad != null)   data.append('edad', j.edad);
+      if (fotoFile)         data.append('foto', fotoFile);
+
+      fetch(`/api/jugadores/${j.id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') },
+        body: data
+      })
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(updated => {
+        Object.assign(j, updated);
+        if (fotoFile) {
+          fotoVersion[j.id] = Date.now();
+          renderDeck();
+          if (j.id === selectedId) renderStage(false);
+        }
+      })
+      .catch(() => {
+        Object.assign(j, prev);
+        renderDeck();
+        if (j.id === selectedId) renderStage(false);
+        toast('No se pudo guardar — cambios revertidos', true);
+      });
+    });
+
+    // Navegación con teclado
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById('stage-info').classList.contains('editing')) return;
+      if (e.target.tagName === 'INPUT') return;
+      const idx = jugadores.findIndex(x => x.id === selectedId);
+      if (idx === -1) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        if (idx < jugadores.length - 1) select(jugadores[idx + 1].id);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        if (idx > 0) select(jugadores[idx - 1].id);
+      }
+    });
+
+    // ── CARGA (paginada en servidor) ──
+    const PAGE_SIZE = 24;
+    let page = 0, totalPages = 1;
+
+    async function loadJugadores() {
+      const res = await apiFetch(`/equipos/${equipoId}/jugadores?page=${page}&size=${PAGE_SIZE}`);
+      jugadores  = res?.content || [];
+      totalPages = res?.totalPages || 1;
+      renderPager();
+      const empty = document.getElementById('empty-state');
+
+      if (jugadores.length === 0) {
+        empty.style.display = 'flex';
+        document.getElementById('bg-fill').style.backgroundImage = GRADIENTS[0];
+        renderDeck();
+        renderStage(false);
+        return;
+      }
+      empty.style.display = 'none';
+      selectedId = jugadores[0].id;
+      deckOffset = 0;
+      renderDeck();
+      renderStage(false);
+    }
+
+    function renderPager() {
+      const pager = document.getElementById('deck-pager');
+      pager.style.display = totalPages > 1 ? 'flex' : 'none';
+      document.getElementById('pg-info').textContent = `Página ${page + 1} de ${totalPages}`;
+      document.getElementById('pg-prev').disabled = page === 0;
+      document.getElementById('pg-next').disabled = page >= totalPages - 1;
+    }
+
+    document.getElementById('pg-prev').addEventListener('click', () => {
+      if (page > 0) { page--; loadJugadores(); }
+    });
+    document.getElementById('pg-next').addEventListener('click', () => {
+      if (page < totalPages - 1) { page++; loadJugadores(); }
+    });
+
+    // ── FORM AÑADIR ──
     const formPanel = document.getElementById('form-panel');
     document.getElementById('toggle-form-btn').addEventListener('click', () => {
       formPanel.style.display = formPanel.style.display === 'none' ? 'block' : 'none';
@@ -451,25 +712,18 @@
     document.getElementById('cancel-btn').addEventListener('click', () => {
       formPanel.style.display = 'none';
       document.getElementById('jugador-form').reset();
-      resetFotoPreview();
+      document.getElementById('foto-preview').innerHTML = '📷';
     });
 
-    // Foto preview
     const fotoInput = document.getElementById('foto-input');
     document.getElementById('foto-btn').addEventListener('click', () => fotoInput.click());
     fotoInput.addEventListener('change', () => {
       const file = fotoInput.files[0];
       if (!file) return;
-      const preview = document.getElementById('foto-preview');
-      const url = URL.createObjectURL(file);
-      preview.innerHTML = `<img src="${url}" />`;
+      document.getElementById('foto-preview').innerHTML =
+        `<img src="${URL.createObjectURL(file)}" />`;
     });
 
-    function resetFotoPreview() {
-      document.getElementById('foto-preview').innerHTML = '📷';
-    }
-
-    // Submit form
     document.getElementById('jugador-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
@@ -494,10 +748,15 @@
           body: data
         });
         if (!res.ok) throw new Error('Error al guardar el jugador');
+        const nuevo = await res.json();
         formPanel.style.display = 'none';
         form.reset();
-        resetFotoPreview();
-        await loadJugadores();
+        document.getElementById('foto-preview').innerHTML = '📷';
+        document.getElementById('empty-state').style.display = 'none';
+        jugadores.push(nuevo);
+        renderDeck();
+        if (jugadores.length === 1) { selectedId = nuevo.id; renderDeck(); renderStage(false); }
+        else select(nuevo.id);
       } catch (err) {
         errEl.textContent = err.message;
       } finally {
@@ -506,135 +765,15 @@
       }
     });
 
-    // Detail panel
-    const detailPanel = document.getElementById('detail-panel');
-    let activeCard = null;
-
-    function openDetail(card, j) {
-      if (activeCard === card) {
-        card.classList.remove('active');
-        detailPanel.style.display = 'none';
-        activeCard = null;
-        return;
+    // ── INIT ──
+    document.addEventListener('DOMContentLoaded', async () => {
+      const equipos = await apiFetch('/equipos');
+      if (equipos) {
+        const equipo = equipos.find(e => String(e.id) === equipoId);
+        if (equipo) document.getElementById('header-title').textContent = equipo.nombre;
       }
-      if (activeCard) activeCard.classList.remove('active');
-      activeCard = card;
-      card.classList.add('active');
-
-      const initials = j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-      document.getElementById('detail-avatar').innerHTML = j.fotoUrl
-        ? `<img src="/api/jugadores/${j.id}/foto" alt="${j.nombre}" />`
-        : initials;
-      document.getElementById('detail-name').textContent     = j.nombre;
-      document.getElementById('detail-goles').textContent    = j.totalGoals;
-      document.getElementById('detail-partidos').textContent = j.partidosJugados;
-      document.getElementById('detail-gpp').textContent      = j.golPorPartido?.toFixed(2) ?? '—';
-
-      const badges = [
-        j.posicion ? `<span class="player-badge">${j.posicion}</span>` : '',
-        j.dorsal   ? `<span class="player-dorsal">#${j.dorsal}</span>` : '',
-        j.edad     ? `<span class="player-edad">${j.edad} años</span>` : '',
-      ].filter(Boolean).join('');
-      document.getElementById('detail-badges').innerHTML = badges || '<span class="player-edad">Sin datos adicionales</span>';
-
-      document.getElementById('edit-btn').onclick = () => {
-        window.location.href = `/editar-jugador.html?jugadorId=${j.id}&equipoId=${equipoId}`;
-      };
-
-      detailPanel.style.display = 'block';
-    }
-
-    // Load jugadores
-    async function loadJugadores() {
-      const content = document.getElementById('content');
-      const jugadores = await apiFetch(`/equipos/${equipoId}/jugadores`);
-
-      if (!jugadores || jugadores.length === 0) {
-        content.innerHTML = `
-          <div class="glass full-panel" style="text-align:center;padding:48px 24px;">
-            <div style="font-size:40px;margin-bottom:16px;">👥</div>
-            <div style="font-size:16px;font-weight:600;color:var(--txt);margin-bottom:8px;">Sin jugadores aún</div>
-            <div style="font-size:13px;color:var(--txt2);">Pulsa "+ Añadir" para crear el primer jugador.</div>
-          </div>`;
-        return;
-      }
-
-      content.innerHTML = `<div class="player-grid">${jugadores.map(j => playerCard(j)).join('')}</div>`;
-
-      content.querySelectorAll('.player-card').forEach((card, i) => {
-        card.addEventListener('click', () => openDetail(card, jugadores[i]));
-      });
-    }
-
-    function playerCard(j) {
-      const initials = j.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-
-      const photoHtml = j.fotoUrl
-        ? `<img class="player-card-photo" src="/api/jugadores/${j.id}/foto" alt="${j.nombre}" />`
-        : `<div class="player-card-initials">${initials}</div>`;
-
-      const dorsalHtml = j.dorsal
-        ? `<div class="player-card-dorsal">#${j.dorsal}</div>`
-        : '';
-
-      return `
-        <div class="glass player-card">
-          ${photoHtml}
-          ${dorsalHtml}
-          <div class="player-card-overlay">
-            <div class="player-card-pos">${j.posicion || 'Jugador'}</div>
-            <div class="player-card-name">${j.nombre}</div>
-            <div class="player-card-stats">
-              <div class="player-card-stat">
-                <div class="player-card-stat-val">${j.totalGoals}</div>
-                <div class="player-card-stat-lbl">Goles</div>
-              </div>
-              <div class="player-card-stat">
-                <div class="player-card-stat-val">${j.partidosJugados}</div>
-                <div class="player-card-stat-lbl">Partidos</div>
-              </div>
-              <div class="player-card-stat">
-                <div class="player-card-stat-val">${j.golPorPartido?.toFixed(2) ?? '—'}</div>
-                <div class="player-card-stat-lbl">G/P</div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }
-
-	document.addEventListener('DOMContentLoaded', async () => {
-	      // Título con nombre del equipo
-	      const equipos = await apiFetch('/equipos');
-	      if (equipos) {
-	        const equipo = equipos.find(e => String(e.id) === equipoId);
-	        if (equipo) document.getElementById('header-title').textContent = equipo.nombre;
-	      }
-	      await loadJugadores();
-
-	      // Scroll con rueda del ratón y botones
-	      function getGrid() {
-	        return document.querySelector('.player-grid');
-	      }
-
-	      document.addEventListener('wheel', (e) => {
-	        const grid = getGrid();
-	        if (!grid) return;
-	        if (grid.contains(e.target) || e.target === grid) {
-	          e.preventDefault();
-	          grid.scrollLeft += e.deltaY;
-	        }
-	      }, { passive: false });
-
-	      document.getElementById('scroll-left-btn').addEventListener('click', () => {
-	        const grid = getGrid();
-	        if (grid) grid.scrollBy({ left: -400, behavior: 'smooth' });
-	      });
-
-	      document.getElementById('scroll-right-btn').addEventListener('click', () => {
-	        const grid = getGrid();
-	        if (grid) grid.scrollBy({ left: 400, behavior: 'smooth' });
-	      });
-	    });
+      await loadJugadores();
+    });
   </script>
 
 </body>

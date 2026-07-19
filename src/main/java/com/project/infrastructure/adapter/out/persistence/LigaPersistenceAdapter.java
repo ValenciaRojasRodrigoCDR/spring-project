@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class LigaPersistenceAdapter implements LigaRepository {
 
     @Override
     public Liga save(Liga liga) {
-        return toDomain(ligaJpaRepository.saveAndFlush(toEntity(liga)));
+        return toDomain(ligaJpaRepository.save(toEntity(liga)));
     }
 
     @Override
@@ -51,6 +53,13 @@ public class LigaPersistenceAdapter implements LigaRepository {
     @Override
     public List<Long> findEquipoIdsByLigaId(Long ligaId) {
         return ligaEquipoJpaRepository.findEquipoIdsByLigaId(ligaId);
+    }
+
+    @Override
+    public Map<Long, List<Long>> findEquipoIdsByLigaIds(List<Long> ligaIds) {
+        return ligaEquipoJpaRepository.findByIdLigaIdIn(ligaIds).stream()
+                .collect(Collectors.groupingBy(e -> e.getId().getLigaId(),
+                        Collectors.mapping(e -> e.getId().getEquipoId(), Collectors.toList())));
     }
 
     private Liga toDomain(LigaEntity e) {

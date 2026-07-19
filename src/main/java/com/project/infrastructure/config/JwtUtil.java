@@ -1,7 +1,10 @@
 package com.project.infrastructure.config;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,24 +16,26 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
+    @Value("${app.jwt.secret}")
+    private String secret;
+
     @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
 
     private SecretKey key;
+    private JwtParser parser;
 
     @PostConstruct
     public void init() {
-        key = Keys.hmacShaKeyFor(Jwts.SIG.HS256.key().build().getEncoded());
+        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        parser = Jwts.parser().verifyWith(key).build();
     }
 
-    public String generateToken(String username, String role) {
-        return generateToken(username, role, null);
-    }
-
-    public String generateToken(String username, String role, Long jugadorId) {
+    public String generateToken(String username, String role, Long userId, Long jugadorId) {
         var builder = Jwts.builder()
                 .subject(username)
                 .claim("role", role)
+                .claim("userId", userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs));
         if (jugadorId != null) {
@@ -39,28 +44,12 @@ public class JwtUtil {
         return builder.signWith(key).compact();
     }
 
-    public String extractUsername(String token) {
-        return Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload().getSubject();
-    }
-
-    public String extractRole(String token) {
-        return Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload().get("role", String.class);
-    }
-
-    public Long extractJugadorId(String token) {
-        Number val = Jwts.parser().verifyWith(key).build()
-                .parseSignedClaims(token).getPayload().get("jugadorId", Number.class);
-        return val != null ? val.longValue() : null;
-    }
-
-    public boolean isValid(String token) {
+    /** Devuelve los claims verificados, o null si el token es inválido. Una sola verificación de firma. */
+    public Claims parse(String token) {
         try {
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
-            return true;
-        } catch (JwtException e) {
-            return false;
+            return parser.parseSignedClaims(token).getPayload();
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
         }
     }
 }
