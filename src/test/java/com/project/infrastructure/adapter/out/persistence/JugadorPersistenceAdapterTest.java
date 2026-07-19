@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +54,24 @@ class JugadorPersistenceAdapterTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getPosicion()).isEqualTo("DEL");
+    }
+
+    @Test
+    void findByEquipoId_paginado_delegaConPageRequest() {
+        when(jpaRepository.findByEquipoId(eq(3L), any(org.springframework.data.domain.Pageable.class)))
+                .thenReturn(List.of(buildEntity()));
+
+        List<Jugador> result = adapter.findByEquipoId(3L, 0, 25);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getNombre()).isEqualTo("Leo");
+    }
+
+    @Test
+    void countByEquipoId_delegaAlRepositorio() {
+        when(jpaRepository.countByEquipoId(3L)).thenReturn(500L);
+
+        assertThat(adapter.countByEquipoId(3L)).isEqualTo(500L);
     }
 
     @Test

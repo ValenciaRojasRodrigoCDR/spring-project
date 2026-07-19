@@ -1,0 +1,26 @@
+- generic [ref=f6e2]:
+  - banner [ref=f6e3]:
+    - button "← Volver" [ref=f6e4] [cursor=pointer]
+    - generic [ref=f6e5]: Gestión de usuarios
+    - button "+ Nuevo usuario" [ref=f6e6] [cursor=pointer]
+  - generic [ref=f6e7]:
+    - generic [ref=f6e8]: Usuarios del sistema
+    - table [ref=f6e9]:
+      - rowgroup [ref=f6e10]:
+        - row [ref=f6e11]:
+          - columnheader "Usuario" [ref=f6e12] [cursor=pointer]
+          - columnheader "Nombre" [ref=f6e13] [cursor=pointer]
+          - columnheader "Email" [ref=f6e14] [cursor=pointer]
+          - columnheader "Rol" [ref=f6e15] [cursor=pointer]
+          - columnheader "Jugador ID" [ref=f6e16] [cursor=pointer]
+          - columnheader [ref=f6e17] [cursor=pointer]
+      - rowgroup [ref=f6e18]:
+        - row [ref=f6e19]:
+          - cell [ref=f6e20]:
+            - strong [ref=f6e21]: admin
+          - cell "Admin 4M Drink Team" [ref=f6e22]
+          - cell "admin@4mdrinkteam.com" [ref=f6e23]
+          - cell "ADMIN" [ref=f6e24]
+          - cell "—" [ref=f6e26]
+          - cell [ref=f6e27]:
+            - button "Rol" [ref=f6e28] [cursor=pointer]

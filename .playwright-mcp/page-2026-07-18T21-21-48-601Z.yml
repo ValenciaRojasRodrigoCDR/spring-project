@@ -1,0 +1,51 @@
+- generic [ref=f13e2]:
+  - banner [ref=f13e3]:
+    - generic [ref=f13e4]:
+      - img "4M" [ref=f13e6]
+      - generic [ref=f13e8]:
+        - generic [ref=f13e9]: Panel de control
+        - generic [ref=f13e10]: ⚙️ Administrador
+    - generic [ref=f13e11]:
+      - generic [ref=f13e13]: Activo
+      - button "Cerrar sesión" [ref=f13e14] [cursor=pointer]
+  - generic "Ver mi perfil" [ref=f13e15] [cursor=pointer]:
+    - generic [ref=f13e16]: A
+    - generic [ref=f13e17]:
+      - generic [ref=f13e18]: Bienvenido de nuevo,
+      - generic [ref=f13e19]: admin
+  - generic [ref=f13e20]:
+    - generic [ref=f13e21] [cursor=pointer]:
+      - generic [ref=f13e22]: 🏆
+      - generic [ref=f13e23]: Tu club
+      - generic [ref=f13e24]: No tienes equipos creados
+      - generic [ref=f13e25]: →
+    - generic [ref=f13e26] [cursor=pointer]:
+      - generic [ref=f13e27]: ✦
+      - generic [ref=f13e28]: Crear club
+      - generic [ref=f13e29]: Crea un nuevo club y empieza a gestionar tu equipo
+      - generic [ref=f13e30]: →
+    - generic [ref=f13e31] [cursor=pointer]:
+      - generic [ref=f13e32]: 📂
+      - generic [ref=f13e33]: Importar club
+      - generic [ref=f13e34]: Importa los datos de tu club desde un fichero Excel
+      - generic [ref=f13e35]: →
+    - generic [ref=f13e36] [cursor=pointer]:
+      - generic [ref=f13e37]: 🏅
+      - generic [ref=f13e38]: Ligas
+      - generic [ref=f13e39]: No hay ligas creadas
+      - generic [ref=f13e40]: →
+    - generic [ref=f13e41] [cursor=pointer]:
+      - generic [ref=f13e42]: 📥
+      - generic [ref=f13e43]: Importar liga
+      - generic [ref=f13e44]: Importa partidos de una liga desde un fichero Excel
+      - generic [ref=f13e45]: →
+    - generic [ref=f13e46] [cursor=pointer]:
+      - generic [ref=f13e47]: 👥
+      - generic [ref=f13e48]: Usuarios
+      - generic [ref=f13e49]: Gestiona los usuarios y sus permisos
+      - generic [ref=f13e50]: →
+    - generic [ref=f13e51] [cursor=pointer]:
+      - generic [ref=f13e52]: 👤
+      - generic [ref=f13e53]: Mi perfil
+      - generic [ref=f13e54]: Consulta y gestiona los datos de tu cuenta de usuario
+      - generic [ref=f13e55]: →

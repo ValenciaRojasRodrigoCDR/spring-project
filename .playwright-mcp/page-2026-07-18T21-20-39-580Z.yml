@@ -1,0 +1,14 @@
+- generic [ref=f3e2]:
+  - banner [ref=f3e3]:
+    - generic [ref=f3e4] [cursor=pointer]:
+      - generic [ref=f3e5]: ←
+      - generic [ref=f3e6]:
+        - generic [ref=f3e7]: Ligas
+        - generic [ref=f3e8]: Gestión de competiciones
+    - generic [ref=f3e9]:
+      - button "+ Nueva liga" [ref=f3e10] [cursor=pointer]
+      - button "Cerrar sesión" [ref=f3e11] [cursor=pointer]
+  - generic [ref=f3e13]:
+    - text: No tienes ligas creadas.Pulsa
+    - strong [ref=f3e14]: + Nueva liga
+    - text: para empezar.

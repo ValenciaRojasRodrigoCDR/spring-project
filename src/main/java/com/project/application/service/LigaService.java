@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -91,5 +92,10 @@ public class LigaService implements CreateLigaUseCase, GetLigasQuery, UpdateLiga
     @Override
     public List<Long> getEquipoIds(Long ligaId) {
         return ligaRepository.findEquipoIdsByLigaId(ligaId);
+    }
+
+    @Override
+    public Map<Long, List<Long>> getEquipoIdsByLigaIds(List<Long> ligaIds) {
+        return ligaIds.isEmpty() ? Map.of() : ligaRepository.findEquipoIdsByLigaIds(ligaIds);
     }
 }

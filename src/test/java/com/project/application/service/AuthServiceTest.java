@@ -39,12 +39,12 @@ class AuthServiceTest {
         User user = buildUser();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("plain", "hashed")).thenReturn(true);
-        when(jwtUtil.generateToken("admin", "ADMIN")).thenReturn("jwt-token");
+        when(jwtUtil.generateToken("admin", "ADMIN", 1L, null)).thenReturn("jwt-token");
 
         String token = authService.login(new LoginCommand("admin", "plain"));
 
         assertThat(token).isEqualTo("jwt-token");
-        verify(jwtUtil).generateToken("admin", "ADMIN");
+        verify(jwtUtil).generateToken("admin", "ADMIN", 1L, null);
     }
 
     @Test
@@ -64,6 +64,6 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(new LoginCommand("admin", "wrong")))
                 .isInstanceOf(InvalidCredentialsException.class);
 
-        verify(jwtUtil, never()).generateToken(any(), any());
+        verify(jwtUtil, never()).generateToken(any(), any(), any(), any());
     }
 }

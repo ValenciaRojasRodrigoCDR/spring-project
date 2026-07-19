@@ -24,3 +24,4 @@ Thumbs.db
 
 # Uploads (runtime player photos at project root only)
 /uploads/
+graphify-out/

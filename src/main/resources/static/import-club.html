@@ -122,6 +122,11 @@
           </thead>
           <tbody id="players-body"></tbody>
         </table>
+        <div id="players-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+          <button class="btn pg-prev">‹</button>
+          <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+          <button class="btn pg-next">›</button>
+        </div>
       </div>
 
       <!-- TABLA PARTIDOS -->
@@ -139,6 +144,11 @@
           </thead>
           <tbody id="matches-body"></tbody>
         </table>
+        <div id="matches-pager" style="display:none;justify-content:center;align-items:center;gap:10px;margin-top:12px;">
+          <button class="btn pg-prev">‹</button>
+          <span class="pg-info" style="font-size:12px;color:var(--txt2);min-width:90px;text-align:center;"></span>
+          <button class="btn pg-next">›</button>
+        </div>
       </div>
 
     </div>
@@ -391,6 +401,33 @@
       });
     }
 
+    // ── Paginación de la preview (los datos viven en memoria) ────
+    const playersPager = createPager('players-pager', (pageItems, offset) => {
+      document.getElementById('players-body').innerHTML = pageItems.map((p, i) => {
+        const idx  = offset + i;
+        const rank = idx === 0 ? 'rnk-primary' : idx < 3 ? 'rnk-secondary' : 'rnk-neutral';
+        return `
+        <tr>
+          <td><span class="rnk ${rank}">${idx + 1}</span></td>
+          <td>${p.name}</td>
+          <td class="tr pts-cell">${p.totalGoals}</td>
+          <td class="tr">${p.partidosJugados}</td>
+          <td class="tr">${p.golPorPartido?.toFixed(2) ?? '—'}</td>
+        </tr>`;
+      }).join('');
+    });
+
+    const matchesPager = createPager('matches-pager', pageItems => {
+      document.getElementById('matches-body').innerHTML = pageItems.map(m => `
+        <tr>
+          <td><span class="status-badge status-info">${m.jornada}</span></td>
+          <td>${m.rival ?? '—'}</td>
+          <td>${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '—'}</td>
+          <td>${m.result ?? '—'}</td>
+          <td class="tr pts-cell">${m.teamTotalGoals ?? '—'}</td>
+        </tr>`).join('');
+    });
+
     // ── Render ───────────────────────────────────────────────────
     function renderPreview(data) {
       const players = data.players ?? [];
@@ -406,35 +443,9 @@
       document.getElementById('kpi-max').textContent       = top?.totalGoals ?? '—';
       document.getElementById('kpi-max-name').textContent  = top?.name ?? '—';
 
-      // Jugadores — ordenados por goles desc
-      const sorted = [...players].sort((a, b) => b.totalGoals - a.totalGoals);
-      const tbody = document.getElementById('players-body');
-      tbody.innerHTML = '';
-      sorted.forEach((p, i) => {
-        const rank = i === 0 ? 'rnk-primary' : i < 3 ? 'rnk-secondary' : 'rnk-neutral';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="rnk ${rank}">${i + 1}</span></td>
-          <td>${p.name}</td>
-          <td class="tr pts-cell">${p.totalGoals}</td>
-          <td class="tr">${p.partidosJugados}</td>
-          <td class="tr">${p.golPorPartido?.toFixed(2) ?? '—'}</td>`;
-        tbody.appendChild(tr);
-      });
-
-      // Partidos
-      const mbody = document.getElementById('matches-body');
-      mbody.innerHTML = '';
-      matches.forEach(m => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span class="status-badge status-info">${m.jornada}</span></td>
-          <td>${m.rival ?? '—'}</td>
-          <td>${m.date ? new Date(m.date).toLocaleDateString('es-ES') : '—'}</td>
-          <td>${m.result ?? '—'}</td>
-          <td class="tr pts-cell">${m.teamTotalGoals ?? '—'}</td>`;
-        mbody.appendChild(tr);
-      });
+      // Jugadores — ordenados por goles desc, paginados
+      playersPager.setItems([...players].sort((a, b) => b.totalGoals - a.totalGoals));
+      matchesPager.setItems(matches);
 
       document.getElementById('preview-section').style.display = 'block';
       document.getElementById('export-section').style.display = 'block';

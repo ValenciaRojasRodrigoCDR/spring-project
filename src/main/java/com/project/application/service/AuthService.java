@@ -27,6 +27,6 @@ public class AuthService implements LoginUseCase {
             throw new InvalidCredentialsException();
         }
 
-        return jwtUtil.generateToken(user.getUsername(), user.getRole());
+        return jwtUtil.generateToken(user.getUsername(), user.getRole(), user.getId(), user.getJugadorId());
     }
 }

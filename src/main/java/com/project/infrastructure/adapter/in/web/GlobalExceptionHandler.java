@@ -1,6 +1,7 @@
 package com.project.infrastructure.adapter.in.web;
 
 import com.project.domain.exception.EquipoNotFoundException;
+import com.project.domain.exception.JugadorNotFoundException;
 import com.project.domain.exception.LigaNotFoundException;
 import com.project.domain.exception.PartidoNotFoundException;
 import com.project.domain.exception.UnauthorizedEquipoAccessException;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +45,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("errors", errors));
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Valor no válido para '" + ex.getName() + "': " + ex.getValue()));
+    }
+
     @ExceptionHandler(EquipoNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleEquipoNotFound(EquipoNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
@@ -60,6 +68,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PartidoNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handlePartidoNotFound(PartidoNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(JugadorNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleJugadorNotFound(JugadorNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
     }
 

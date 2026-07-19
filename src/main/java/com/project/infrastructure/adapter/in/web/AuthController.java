@@ -24,7 +24,7 @@ public class AuthController {
         try {
             String token = loginUseCase.login(
                     new LoginUseCase.LoginCommand(request.username(), request.password()));
-            String role  = jwtUtil.extractRole(token);
+            String role  = jwtUtil.parse(token).get("role", String.class);
             return ResponseEntity.ok(new LoginResponse(token, role));
         } catch (InvalidCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

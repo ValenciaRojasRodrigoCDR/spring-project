@@ -1,5 +1,6 @@
 package com.project.application.service;
 
+import com.project.application.port.in.PageResult;
 import com.project.application.port.out.JugadorRepository;
 import com.project.domain.model.Jugador;
 import org.junit.jupiter.api.Test;
@@ -38,5 +39,18 @@ class JugadorQueryServiceTest {
         List<Jugador> result = jugadorQueryService.getByEquipoId(99L);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getByEquipoId_paginado_devuelvePaginaYTotal() {
+        Jugador jugador = Jugador.builder().id(1L).nombre("Leo").equipoId(3L)
+                .totalGoals(0).partidosJugados(0).golPorPartido(0).build();
+        when(jugadorRepository.findByEquipoId(3L, 1, 25)).thenReturn(List.of(jugador));
+        when(jugadorRepository.countByEquipoId(3L)).thenReturn(30L);
+
+        PageResult<Jugador> result = jugadorQueryService.getByEquipoId(3L, 1, 25);
+
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(30L);
     }
 }

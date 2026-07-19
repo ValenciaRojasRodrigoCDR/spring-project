@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -38,8 +39,10 @@ class AuthControllerTest {
 
     @Test
     void login_validCredentials_returns200WithToken() throws Exception {
+        io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
+        when(claims.get("role", String.class)).thenReturn("ADMIN");
         when(loginUseCase.login(any())).thenReturn("jwt-token");
-        when(jwtUtil.extractRole(anyString())).thenReturn("ADMIN");
+        when(jwtUtil.parse(anyString())).thenReturn(claims);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

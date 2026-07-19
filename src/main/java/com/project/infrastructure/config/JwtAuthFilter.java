@@ -1,5 +1,6 @@
 package com.project.infrastructure.config;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,16 +28,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            if (jwtUtil.isValid(token)) {
-                String username  = jwtUtil.extractUsername(token);
-                String role      = jwtUtil.extractRole(token);
-                Long   jugadorId = jwtUtil.extractJugadorId(token);
+            Claims claims = jwtUtil.parse(header.substring(7));
+            if (claims != null) {
+                String role      = claims.get("role", String.class);
+                Number userId    = claims.get("userId", Number.class);
+                Number jugadorId = claims.get("jugadorId", Number.class);
 
                 var authority = new SimpleGrantedAuthority("ROLE_" + role);
-                var auth = new UsernamePasswordAuthenticationToken(username, null, List.of(authority));
-                // jugadorId stored in details for JUGADOR self-edit checks
-                auth.setDetails(jugadorId);
+                var auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of(authority));
+                auth.setDetails(new AuthDetails(
+                        userId != null ? userId.longValue() : null,
+                        jugadorId != null ? jugadorId.longValue() : null));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }

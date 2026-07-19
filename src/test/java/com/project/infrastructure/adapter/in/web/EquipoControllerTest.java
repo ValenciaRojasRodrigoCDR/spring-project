@@ -6,15 +6,15 @@ import com.project.application.port.in.GetEquiposQuery;
 import com.project.application.port.in.GetEstadisticasAvanzadasQuery;
 import com.project.application.port.in.GetEstadisticasAvanzadasQuery.Result;
 import com.project.application.port.in.GetJugadoresQuery;
-import com.project.application.port.in.GetUserQuery;
+import com.project.application.port.in.PageResult;
 import com.project.application.port.in.UpdateEquipoUseCase;
 import com.project.domain.exception.EquipoNotFoundException;
 import com.project.domain.exception.UnauthorizedEquipoAccessException;
 import com.project.domain.model.Equipo;
 import com.project.domain.model.Jugador;
-import com.project.domain.model.User;
 import com.project.infrastructure.adapter.in.web.dto.CreateEquipoRequest;
 import com.project.infrastructure.adapter.in.web.dto.UpdateEquipoRequest;
+import com.project.infrastructure.config.AuthDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,7 +40,6 @@ class EquipoControllerTest {
     @Mock CreateEquipoUseCase           createEquipoUseCase;
     @Mock UpdateEquipoUseCase           updateEquipoUseCase;
     @Mock GetEquiposQuery               getEquiposQuery;
-    @Mock GetUserQuery                  getUserQuery;
     @Mock GetJugadoresQuery             getJugadoresQuery;
     @Mock GetEstadisticasAvanzadasQuery getEstadisticasAvanzadasQuery;
     @InjectMocks EquipoController equipoController;
@@ -55,11 +54,6 @@ class EquipoControllerTest {
                 .build();
     }
 
-    private User buildUser() {
-        return User.builder().id(1L).username("admin").password("pass")
-                .role("ADMIN").nombre("Admin").apellidos("T").email("a@b.com").build();
-    }
-
     private Equipo buildEquipo() {
         return Equipo.builder().id(1L).nombre("FC Test").temporada("2024")
                 .liga("Liga A").descripcion("Desc").userId(1L)
@@ -67,12 +61,13 @@ class EquipoControllerTest {
     }
 
     private UsernamePasswordAuthenticationToken mockAuth() {
-        return new UsernamePasswordAuthenticationToken("admin", null, List.of());
+        var auth = new UsernamePasswordAuthenticationToken("admin", null, List.of());
+        auth.setDetails(new AuthDetails(1L, null));
+        return auth;
     }
 
     @Test
     void list_returnsEquipos() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         when(getEquiposQuery.getByUserId(1L)).thenReturn(List.of(buildEquipo()));
 
         mockMvc.perform(get("/api/equipos").principal(mockAuth()))
@@ -83,7 +78,6 @@ class EquipoControllerTest {
 
     @Test
     void list_empty_returnsEmptyArray() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         when(getEquiposQuery.getByUserId(1L)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/equipos").principal(mockAuth()))
@@ -93,7 +87,6 @@ class EquipoControllerTest {
 
     @Test
     void create_returnsCreated() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         when(createEquipoUseCase.create(any())).thenReturn(buildEquipo());
 
         mockMvc.perform(post("/api/equipos")
@@ -106,7 +99,6 @@ class EquipoControllerTest {
 
     @Test
     void update_validRequest_returnsOk() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         Equipo updated = Equipo.builder().id(1L).nombre("FC Nuevo").temporada("2025")
                 .liga("Liga B").descripcion("Desc").userId(1L).createdAt(LocalDateTime.of(2024, 1, 1, 0, 0)).build();
         when(updateEquipoUseCase.update(any())).thenReturn(updated);
@@ -121,7 +113,6 @@ class EquipoControllerTest {
 
     @Test
     void update_equipoNotFound_returns404() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         when(updateEquipoUseCase.update(any())).thenThrow(new EquipoNotFoundException(1L));
 
         mockMvc.perform(put("/api/equipos/1")
@@ -134,7 +125,6 @@ class EquipoControllerTest {
 
     @Test
     void update_notOwner_returns403() throws Exception {
-        when(getUserQuery.getByUsername("admin")).thenReturn(buildUser());
         when(updateEquipoUseCase.update(any())).thenThrow(new UnauthorizedEquipoAccessException());
 
         mockMvc.perform(put("/api/equipos/1")
@@ -165,6 +155,22 @@ class EquipoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nombre").value("Leo"))
                 .andExpect(jsonPath("$[0].dorsal").value(10));
+    }
+
+    @Test
+    void jugadores_conPage_devuelvePaginaConTotales() throws Exception {
+        Jugador jugador = Jugador.builder().id(1L).nombre("Leo").posicion("DEL")
+                .dorsal(10).edad(25).totalGoals(5).partidosJugados(10)
+                .golPorPartido(0.5).equipoId(1L).build();
+        when(getJugadoresQuery.getByEquipoId(1L, 0, 25))
+                .thenReturn(new PageResult<>(List.of(jugador), 500L));
+
+        mockMvc.perform(get("/api/equipos/1/jugadores?page=0&size=25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].nombre").value("Leo"))
+                .andExpect(jsonPath("$.totalElements").value(500))
+                .andExpect(jsonPath("$.totalPages").value(20))
+                .andExpect(jsonPath("$.page").value(0));
     }
 
     @Test

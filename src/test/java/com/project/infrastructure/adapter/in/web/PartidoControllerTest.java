@@ -6,6 +6,7 @@ import com.project.application.port.in.CreatePartidoUseCase;
 import com.project.application.port.in.DeletePartidoUseCase;
 import com.project.application.port.in.GetAsistenciasQuery;
 import com.project.application.port.in.GetPartidosQuery;
+import com.project.application.port.in.PageResult;
 import com.project.application.port.in.RegistrarAsistenciaUseCase;
 import com.project.domain.exception.PartidoNotFoundException;
 import com.project.domain.model.Asistencia;
@@ -76,6 +77,41 @@ class PartidoControllerTest {
         mockMvc.perform(get("/api/ligas/2/partidos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void importar_creaPartidosEnLoteYDevuelveConteo() throws Exception {
+        when(createPartidoUseCase.createAll(any())).thenReturn(List.of(buildPartido(), buildPartido()));
+
+        var body = objectMapper.writeValueAsString(java.util.Map.of("partidos", List.of(
+                new CreatePartidoRequest(3L, "Rival A", null, null, "2-1", 2, 1),
+                new CreatePartidoRequest(3L, "Rival B", null, null, "0-0", 0, 0))));
+
+        mockMvc.perform(post("/api/ligas/2/partidos/importar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.importados").value(2));
+    }
+
+    @Test
+    void importar_listaVacia_devuelve400() throws Exception {
+        mockMvc.perform(post("/api/ligas/2/partidos/importar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"partidos\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void list_conPage_devuelvePaginaConTotales() throws Exception {
+        when(getPartidosQuery.getByLigaId(2L, 0, 25))
+                .thenReturn(new PageResult<>(List.of(buildPartido()), 100L));
+
+        mockMvc.perform(get("/api/ligas/2/partidos?page=0&size=25"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].rival").value("FC Rival"))
+                .andExpect(jsonPath("$.totalElements").value(100))
+                .andExpect(jsonPath("$.totalPages").value(4));
     }
 
     @Test
